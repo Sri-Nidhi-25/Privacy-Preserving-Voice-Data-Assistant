@@ -10,10 +10,10 @@ class Settings(BaseSettings):
     STT_MODEL: str = "base"               # whisper model size
 
     # LLM
-    OLLAMA_MODEL: str = "llama3.1:8b"
+    OLLAMA_MODEL: str = "llama3.2:latest "
     
     # TTS (Edge TTS - free, no API key)
-    EDGE_TTS_VOICE: str = "en-US-AriaNeural"
+    EDGE_TTS_VOICE: str = "en-US-GuyNeural"
 
     # Security
     API_KEY: str = "secret-key-change-me"
