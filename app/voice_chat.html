@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Voice Data Assistant — Test Chat</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2e38;
+    --text: #e7e9ee;
+    --muted: #8b90a0;
+    --accent: #4fd1a5;
+    --accent-dim: #2a6b54;
+    --danger: #e0556b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  .app {
+    width: 100%;
+    max-width: 640px;
+  }
+  h1 {
+    font-size: 1.3rem;
+    margin: 0 0 4px;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+  .config {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .config input {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+  .log {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .turn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .turn .label {
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .turn.transcript .label { color: var(--accent); }
+  .turn p { margin: 0; line-height: 1.45; }
+  .meta {
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .meta span b { color: var(--text); }
+  audio { width: 100%; margin-top: 8px; }
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  button#recBtn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+  }
+  button#recBtn:active { transform: scale(0.95); }
+  button#recBtn.recording {
+    background: var(--danger);
+    animation: pulse 1.2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(224,85,107,0.5); }
+    70% { box-shadow: 0 0 0 14px rgba(224,85,107,0); }
+    100% { box-shadow: 0 0 0 0 rgba(224,85,107,0); }
+  }
+  .status {
+    font-size: 0.85rem;
+    color: var(--muted);
+    min-height: 1.2em;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .error { color: var(--danger); }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Voice Data Assistant</h1>
+  <div class="sub">Hold the button, ask about customers, tickets, or analytics, release to send.</div>
+
+  <div class="config">
+    <label for="apiUrl">API URL:</label>
+    <input id="apiUrl" value="http://127.0.0.1:8000/voice/query" />
+    <label for="apiKey">API Key:</label>
+    <input id="apiKey" value="secret-key-change-me" />
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <div class="controls">
+    <button id="recBtn" title="Hold to record"></button>
+  </div>
+  <div class="status" id="status">Hold the button to record</div>
+</div>
+
+<script>
+const recBtn = document.getElementById('recBtn');
+const statusEl = document.getElementById('status');
+const logEl = document.getElementById('log');
+
+let mediaRecorder, chunks = [], stream;
+
+async function startRecording() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (err) {
+    statusEl.textContent = 'Microphone permission denied';
+    statusEl.classList.add('error');
+    return;
+  }
+  chunks = [];
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.ondataavailable = e => chunks.push(e.data);
+  mediaRecorder.onstop = sendRecording;
+  mediaRecorder.start();
+  recBtn.classList.add('recording');
+  statusEl.textContent = 'Recording... release to send';
+  statusEl.classList.remove('error');
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+    stream.getTracks().forEach(t => t.stop());
+  }
+  recBtn.classList.remove('recording');
+}
+
+async function sendRecording() {
+  const blob = new Blob(chunks, { type: 'audio/webm' });
+  if (blob.size < 1000) {
+    statusEl.textContent = 'Recording too short, try again';
+    return;
+  }
+  statusEl.textContent = 'Sending to assistant...';
+
+  const apiUrl = document.getElementById('apiUrl').value;
+  const apiKey = document.getElementById('apiKey').value;
+
+  const formData = new FormData();
+  formData.append('audio_file', blob, 'recording.webm');
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'api-key': apiKey },
+      body: formData
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text();
+      throw new Error(`${res.status}: ${errBody}`);
+    }
+
+    const data = await res.json();
+    renderTurn(data, apiUrl);
+    statusEl.textContent = 'Hold the button to record';
+  } catch (err) {
+    statusEl.textContent = 'Request failed: ' + err.message;
+    statusEl.classList.add('error');
+  }
+}
+
+function renderTurn(data, apiUrl) {
+  const base = apiUrl.split('/voice/query')[0];
+  const turn = document.createElement('div');
+  turn.className = 'turn';
+  turn.innerHTML = `
+    <div class="turn transcript">
+      <div class="label">You said</div>
+      <p>${escapeHtml(data.transcript)}</p>
+    </div>
+    <div class="turn answer" style="margin-top:10px;">
+      <div class="label">Assistant</div>
+      <p>${escapeHtml(data.answer_text)}</p>
+      <audio controls src="${base}${data.answer_audio_url}"></audio>
+      <div class="meta">
+        <span>Source: <b>${(data.metadata.data_sources_used || []).join(', ') || 'none'}</b></span>
+        <span>Results: <b>${data.metadata.result_count}</b></span>
+        <span>${escapeHtml(data.metadata.freshness)}</span>
+      </div>
+    </div>
+  `;
+  logEl.prepend(turn);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+recBtn.addEventListener('mousedown', startRecording);
+recBtn.addEventListener('mouseup', stopRecording);
+recBtn.addEventListener('mouseleave', () => { if (mediaRecorder?.state === 'recording') stopRecording(); });
+recBtn.addEventListener('touchstart', e => { e.preventDefault(); startRecording(); });
+recBtn.addEventListener('touchend', e => { e.preventDefault(); stopRecording(); });
+</script>
+</body>
+</html>

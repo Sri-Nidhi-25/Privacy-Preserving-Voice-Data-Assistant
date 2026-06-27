@@ -1,0 +1,563 @@
+import ollama
+import json
+import re
+from datetime import datetime, timezone
+from typing import Optional, List, Dict, Any
+from app.connectors.crm_connector import CRMConnector
+from app.connectors.support_connector import SupportConnector
+from app.connectors.analytics_connector import AnalyticsConnector
+from app.services.business_rules import apply_voice_limits
+from app.services.voice_optimizer import summarize_if_large
+from app.config import settings
+
+SYSTEM_PROMPT = (
+    "You are a voice assistant for internal company data: customers (CRM), "
+    "support tickets, and usage analytics. "
+    "You have access to tools/functions. To use a tool, you MUST call the "
+    "function via the provided tool-calling interface. Do NOT output JSON "
+    "or code blocks – use the tool-calling mechanism directly. "
+    "ONLY use a tool if the user explicitly asks about customers, tickets, or metrics. "
+    "For general questions (like capital cities, jokes, weather), answer directly without tools. "
+    "Always use the tool‑calling interface – never output JSON manually."
+)
+
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_crm_data",
+            "description": "Retrieve customer relationship data.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "status": {"type": "string", "enum": ["active", "inactive"]},
+                    "limit": {"type": "integer", "default": 10},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_support_tickets",
+            "description": "Retrieve support tickets with optional filters.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "status": {"type": "string", "enum": ["open", "closed"]},
+                    "priority": {"type": "string", "enum": ["low", "medium", "high"]},
+                    "limit": {"type": "integer", "default": 10},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_analytics",
+            "description": "Retrieve analytics metrics like daily active users.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "metric": {"type": "string", "enum": ["daily_active_users"]},
+                    "days": {"type": "integer", "default": 7},
+                },
+            },
+        },
+    },
+]
+
+SOURCE_LABELS = {
+    "get_crm_data": "crm",
+    "get_support_tickets": "support",
+    "get_analytics": "analytics",
+}
+
+SCHEMA = {
+    "get_crm_data": {
+        "properties": {
+            "status": {"type": "string", "enum": ["active", "inactive"]},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+        }
+    },
+    "get_support_tickets": {
+        "properties": {
+            "status": {"type": "string", "enum": ["open", "closed"]},
+            "priority": {"type": "string", "enum": ["low", "medium", "high"]},
+            "limit": {"type": "integer", "minimum": 0, "maximum": 100},
+        }
+    },
+    "get_analytics": {
+        "properties": {
+            "metric": {"type": "string", "enum": ["daily_active_users"]},
+            "days": {"type": "integer", "minimum": 0, "maximum": 365},
+        }
+    },
+}
+
+# Keywords that indicate a data query
+DATA_KEYWORDS = [
+    "customer", "ticket", "support", "analytics", "active", "inactive",
+    "open", "closed", "priority", "daily", "users", "metric", "average",
+    "count", "how many", "show me", "list", "get"
+]
+
+def _is_data_query(text: str) -> bool:
+    text_lower = text.lower()
+    return any(kw in text_lower for kw in DATA_KEYWORDS)
+
+def _validate_args(func_name: str, args: dict) -> tuple[bool, str]:
+    schema = SCHEMA.get(func_name)
+    if not schema:
+        return False, f"Unknown function {func_name}"
+    for key, value in args.items():
+        prop = schema["properties"].get(key)
+        if not prop:
+            return False, f"Unexpected argument '{key}'"
+        if prop["type"] == "integer":
+            if not isinstance(value, int):
+                return False, f"'{key}' must be an integer"
+            if "minimum" in prop and value < prop["minimum"]:
+                return False, f"'{key}' must be at least {prop['minimum']}"
+            if "maximum" in prop and value > prop["maximum"]:
+                return False, f"'{key}' must be at most {prop['maximum']}"
+        if prop["type"] == "string" and "enum" in prop:
+            if value not in prop["enum"]:
+                return False, f"'{key}' must be one of {prop['enum']}"
+    return True, ""
+
+def _empty_metadata() -> dict:
+    return {"data_sources_used": [], "result_count": 0, "freshness": "unknown", "tool_calls": []}
+
+def _extract_json_from_text(text: str) -> List[Dict[str, Any]]:
+    """
+    Extract one or more JSON tool-call objects from the text.
+    Returns a list of dicts, each with keys "name" and "arguments".
+    """
+    # Helper: find a balanced JSON object starting at a given position
+    def extract_object(s: str, start: int) -> Optional[str]:
+        brace_count = 0
+        in_string = False
+        escape = False
+        for i, ch in enumerate(s[start:], start):
+            if escape:
+                escape = False
+                continue
+            if ch == '\\':
+                escape = True
+                continue
+            if ch == '"' and not escape:
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if ch == '{':
+                brace_count += 1
+            elif ch == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    return s[start:i+1]
+        return None
+
+    results = []
+    # First, try to find any JSON-like object in the text
+    # We'll iterate over all '{' occurrences
+    for i, ch in enumerate(text):
+        if ch == '{':
+            obj_str = extract_object(text, i)
+            if obj_str:
+                try:
+                    obj = json.loads(obj_str)
+                    # Check if it has the expected structure
+                    if isinstance(obj, dict) and "name" in obj and "arguments" in obj:
+                        results.append(obj)
+                    # Optionally, also accept a "function" key (some models use that)
+                    elif isinstance(obj, dict) and "function" in obj and isinstance(obj["function"], dict):
+                        func = obj["function"]
+                        if "name" in func and "arguments" in func:
+                            results.append({"name": func["name"], "arguments": func["arguments"]})
+                except:
+                    pass
+                # Move index past this object to avoid re‑extracting from inside it
+                # But we can continue scanning from the end of this object (plus a small offset)
+                # For simplicity, we just continue; duplicates are rare.
+
+    # If we found at least one, return all
+    return results
+
+class LLMOrchestrator:
+    def __init__(self, model: Optional[str] = None):
+        self.model = model or settings.OLLAMA_MODEL
+        self.connector_map = {
+            "get_crm_data": CRMConnector(),
+            "get_support_tickets": SupportConnector(),
+            "get_analytics": AnalyticsConnector(),
+        }
+
+    def _execute_tool_calls(self, tool_calls: List[Dict]) -> tuple[str, dict]:
+        """Process a list of tool calls and return (answer_text, metadata)."""
+        answers = []
+        sources_used = []
+        total_results = 0
+        call_log = []
+
+        for call in tool_calls:
+            func_name = call["function"]["name"]
+            args = call["function"]["arguments"]
+
+            valid, error_msg = _validate_args(func_name, args)
+            if not valid:
+                return (
+                    f"Sorry, I couldn't interpret that filter: {error_msg}",
+                    {
+                        "data_sources_used": [],
+                        "result_count": 0,
+                        "freshness": "unknown",
+                        "validation_error": error_msg,
+                        "invalid_args": args,
+                    }
+                )
+
+            connector = self.connector_map.get(func_name)
+            if not connector:
+                continue
+
+            raw_data = connector.fetch(**args)
+            optimized = summarize_if_large(apply_voice_limits(raw_data))
+            answers.append(self._format_answer(optimized, func_name))
+            sources_used.append(SOURCE_LABELS.get(func_name, func_name))
+            total_results += len(raw_data)
+            call_log.append({
+                "source": SOURCE_LABELS.get(func_name, func_name),
+                "args": args,
+                "result_count": len(raw_data),
+            })
+
+        if not answers:
+            return "Sorry, I couldn't find the right data source.", _empty_metadata()
+
+        metadata = {
+            "data_sources_used": sources_used,
+            "result_count": total_results,
+            "freshness": f"Data as of {datetime.now(timezone.utc).isoformat()}",
+            "tool_calls": call_log,
+        }
+        return " ".join(answers), metadata
+
+    def process_query(self, user_text: str) -> dict:
+        if not _is_data_query(user_text):
+            # Bypass tools, just ask the LLM directly (without tools)
+            response = ollama.chat(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_text + " (Answer directly, no tools or APIs.)"}
+                ],
+            )
+        
+            return {
+                "answer": response["message"]["content"],
+                "metadata": _empty_metadata()
+            }
+        response = ollama.chat(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_text},
+            ],
+            tools=TOOLS,
+        )
+        message = response["message"]
+        tool_calls = message.get("tool_calls")
+
+        # If we have proper tool calls, execute them
+        if tool_calls:
+            answer, metadata = self._execute_tool_calls(tool_calls)
+            return {"answer": answer, "metadata": metadata}
+
+        # No tool calls: check if the content contains JSON fallback(s)
+        content = message.get("content", "")
+        extracted_calls = _extract_json_from_text(content)
+        if extracted_calls:
+            # Build a list of synthetic tool calls
+            synthetic_calls = [
+                {"function": {"name": c["name"], "arguments": c["arguments"]}}
+                for c in extracted_calls
+            ]
+            answer, metadata = self._execute_tool_calls(synthetic_calls)
+            return {"answer": answer, "metadata": metadata}
+        
+        # Otherwise, treat as a plain answer
+        return {
+            "answer": content if content else "I didn't understand that query.",
+            "metadata": _empty_metadata()
+        }
+
+    @staticmethod
+    def _format_answer(data, func_name) -> str:
+        if not data:
+            return "No data found."
+        if func_name == "get_crm_data":
+            return f"Found {len(data)} customers."
+        if func_name == "get_support_tickets":
+            return f"Found {len(data)} support tickets."
+        if func_name == "get_analytics" and "value" in data[0]:
+            avg = sum(d["value"] for d in data) / len(data)
+            return f"Average value over the period is {avg:.0f}."
+        return str(data)[:200]
+
+
+# import json
+# import ollama
+# from datetime import datetime, timezone
+# from typing import Optional, List, Dict, Any
+# from app.connectors.crm_connector import CRMConnector
+# from app.connectors.support_connector import SupportConnector
+# from app.connectors.analytics_connector import AnalyticsConnector
+# from app.services.business_rules import apply_voice_limits
+# from app.services.voice_optimizer import summarize_if_large
+# from app.config import settings
+
+# SYSTEM_PROMPT = (
+#     "You are a voice assistant for internal company data: customers (CRM), "
+#     "support tickets, and usage analytics. Use the provided tools via the "
+#     "tool-calling interface - never output JSON manually. Only call a tool "
+#     "when the question is actually about that company data (customer counts/"
+#     "status, ticket counts/status/priority, daily active users). For anything "
+#     "else - general knowledge, small talk, unrelated questions - answer "
+#     "directly without calling a tool."
+# )
+
+# TOOLS = [
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "get_crm_data",
+#             "description": "Retrieve customer relationship data.",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {
+#                     "status": {"type": "string", "enum": ["active", "inactive"]},
+#                     "limit": {"type": "integer", "default": 10},
+#                 },
+#             },
+#         },
+#     },
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "get_support_tickets",
+#             "description": "Retrieve support tickets with optional filters.",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {
+#                     "status": {"type": "string", "enum": ["open", "closed"]},
+#                     "priority": {"type": "string", "enum": ["low", "medium", "high"]},
+#                     "limit": {"type": "integer", "default": 10},
+#                 },
+#             },
+#         },
+#     },
+#     {
+#         "type": "function",
+#         "function": {
+#             "name": "get_analytics",
+#             "description": "Retrieve analytics metrics like daily active users.",
+#             "parameters": {
+#                 "type": "object",
+#                 "properties": {
+#                     "metric": {"type": "string", "enum": ["daily_active_users"]},
+#                     "days": {"type": "integer", "default": 7},
+#                 },
+#             },
+#         },
+#     },
+# ]
+
+# SOURCE_LABELS = {
+#     "get_crm_data": "crm",
+#     "get_support_tickets": "support",
+#     "get_analytics": "analytics",
+# }
+
+# SCHEMA = {
+#     "get_crm_data": {
+#         "status": {"type": "string", "enum": ["active", "inactive"]},
+#         "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+#     },
+#     "get_support_tickets": {
+#         "status": {"type": "string", "enum": ["open", "closed"]},
+#         "priority": {"type": "string", "enum": ["low", "medium", "high"]},
+#         "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+#     },
+#     "get_analytics": {
+#         "metric": {"type": "string", "enum": ["daily_active_users"]},
+#         "days": {"type": "integer", "minimum": 1, "maximum": 365},
+#     },
+# }
+
+
+# def _validate_args(func_name: str, args: dict) -> tuple[bool, str]:
+#     """Returns (is_valid, error_message). None/missing values are treated as
+#     'not provided' and skipped, since the model often omits optional args."""
+#     schema = SCHEMA.get(func_name)
+#     if not schema:
+#         return False, f"Unknown function {func_name}"
+
+#     for key, value in args.items():
+#         if value is None:
+#             continue
+#         prop = schema.get(key)
+#         if not prop:
+#             return False, f"Unexpected argument '{key}'"
+#         if prop["type"] == "integer":
+#             if not isinstance(value, int):
+#                 return False, f"'{key}' must be an integer"
+#             if "minimum" in prop and value < prop["minimum"]:
+#                 return False, f"'{key}' must be at least {prop['minimum']}"
+#             if "maximum" in prop and value > prop["maximum"]:
+#                 return False, f"'{key}' must be at most {prop['maximum']}"
+#         if prop["type"] == "string" and "enum" in prop and value not in prop["enum"]:
+#             return False, f"'{key}' must be one of {prop['enum']}"
+
+#     return True, ""
+
+
+# def _clean_args(args: dict) -> dict:
+#     """Drop None values so connectors fall back to their own defaults."""
+#     return {k: v for k, v in args.items() if v is not None}
+
+
+# def _empty_metadata() -> dict:
+#     return {"data_sources_used": [], "result_count": 0, "freshness": "unknown", "tool_calls": []}
+
+
+# def _extract_tool_calls_from_text(text: str) -> List[Dict[str, Any]]:
+#     """Fallback for models that don't use Ollama's native tool-calling and
+#     instead print a JSON object like {"name": ..., "arguments": {...}}."""
+#     results = []
+#     depth = 0
+#     start = None
+#     in_string = False
+#     escape = False
+
+#     for i, ch in enumerate(text):
+#         if escape:
+#             escape = False
+#             continue
+#         if ch == "\\":
+#             escape = True
+#             continue
+#         if ch == '"':
+#             in_string = not in_string
+#             continue
+#         if in_string:
+#             continue
+#         if ch == "{":
+#             if depth == 0:
+#                 start = i
+#             depth += 1
+#         elif ch == "}":
+#             depth -= 1
+#             if depth == 0 and start is not None:
+#                 try:
+#                     obj = json.loads(text[start:i + 1])
+#                 except json.JSONDecodeError:
+#                     obj = None
+#                 if isinstance(obj, dict):
+#                     if "name" in obj and "arguments" in obj:
+#                         results.append(obj)
+#                     elif isinstance(obj.get("function"), dict) and "name" in obj["function"]:
+#                         results.append(obj["function"])
+#                 start = None
+
+#     return results
+
+
+# class LLMOrchestrator:
+#     def __init__(self, model: Optional[str] = None):
+#         self.model = model or settings.OLLAMA_MODEL
+#         self.connector_map = {
+#             "get_crm_data": CRMConnector(),
+#             "get_support_tickets": SupportConnector(),
+#             "get_analytics": AnalyticsConnector(),
+#         }
+
+#     def process_query(self, user_text: str) -> dict:
+#         response = ollama.chat(
+#             model=self.model,
+#             messages=[
+#                 {"role": "system", "content": SYSTEM_PROMPT},
+#                 {"role": "user", "content": user_text},
+#             ],
+#             tools=TOOLS,
+#         )
+#         message = response["message"]
+
+#         tool_calls = message.get("tool_calls")
+#         if not tool_calls:
+#             # Fallback: some smaller/non-tuned models print JSON instead of
+#             # using Ollama's native tool-calling. Try to recover from that.
+#             content = message.get("content", "")
+#             extracted = _extract_tool_calls_from_text(content)
+#             if extracted:
+#                 tool_calls = [{"function": c} for c in extracted]
+#             else:
+#                 return {"answer": content or "I didn't understand that query.", "metadata": _empty_metadata()}
+
+#         return self._execute_tool_calls(tool_calls)
+
+#     def _execute_tool_calls(self, tool_calls: List[Dict]) -> dict:
+#         answers, sources_used, call_log = [], [], []
+#         total_results = 0
+
+#         for call in tool_calls:
+#             func_name = call["function"]["name"]
+#             args = _clean_args(call["function"]["arguments"])
+
+#             valid, error_msg = _validate_args(func_name, args)
+#             if not valid:
+#                 return {
+#                     "answer": f"Sorry, I couldn't interpret that filter: {error_msg}",
+#                     "metadata": {**_empty_metadata(), "validation_error": error_msg, "invalid_args": args},
+#                 }
+
+#             connector = self.connector_map.get(func_name)
+#             if not connector:
+#                 continue
+
+#             raw_data = connector.fetch(**args)
+#             optimized = summarize_if_large(apply_voice_limits(raw_data))
+
+#             answers.append(self._format_answer(optimized, func_name))
+#             sources_used.append(SOURCE_LABELS.get(func_name, func_name))
+#             total_results += len(raw_data)
+#             call_log.append({
+#                 "source": SOURCE_LABELS.get(func_name, func_name),
+#                 "args": args,
+#                 "result_count": len(raw_data),
+#             })
+
+#         if not answers:
+#             return {"answer": "Sorry, I couldn't find the right data source.", "metadata": _empty_metadata()}
+
+#         metadata = {
+#             "data_sources_used": sources_used,
+#             "result_count": total_results,
+#             "freshness": f"Data as of {datetime.now(timezone.utc).isoformat()}",
+#             "tool_calls": call_log,
+#         }
+#         return {"answer": " ".join(answers), "metadata": metadata}
+
+#     @staticmethod
+#     def _format_answer(data, func_name) -> str:
+#         if not data:
+#             return "No data found."
+#         if func_name == "get_crm_data":
+#             return f"Found {len(data)} customers."
+#         if func_name == "get_support_tickets":
+#             return f"Found {len(data)} support tickets."
+#         if func_name == "get_analytics" and "value" in data[0]:
+#             avg = sum(d["value"] for d in data) / len(data)
+#             return f"Average value over the period is {avg:.0f}."
+#         return str(data)[:200]
