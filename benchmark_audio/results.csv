@@ -1,0 +1,33 @@
+phrase,strength,transcript,wer,expected_data_query,actual_data_query,routing_ok
+Show me all high priority open tickets,none,Show me all high priority open tickets.,0.143,True,True,True
+Show me all high priority open tickets,mild,Show me all high priority of your secrets.,0.429,True,True,True
+Show me all high priority open tickets,medium,Show me all high priority open tickets.,0.143,True,True,True
+Show me all high priority open tickets,strong,Show me all high priority open sickness.,0.143,True,True,True
+How many active customers do we have,none,How many active customers do we have?,0.143,True,True,True
+How many active customers do we have,mild,How many active customers do we have?,0.143,True,True,True
+How many active customers do we have,medium,How many active customers do we have?,0.143,True,True,True
+How many active customers do we have,strong,How many active customers do we have?,0.143,True,True,True
+What's the daily active users trend for the last seven days,none,What's the daily active users trend for the last seven days?,0.091,True,True,True
+What's the daily active users trend for the last seven days,mild,What's the daily Attabuser strength for the last seven days?,0.364,True,True,True
+What's the daily active users trend for the last seven days,medium,What's the daily active users trend for the last seven days?,0.091,True,True,True
+What's the daily active users trend for the last seven days,strong,What the hell have you used to shred for our 70s?,0.909,True,False,False
+List closed support tickets from this week,none,List closed support tickets from this week.,0.143,True,True,True
+List closed support tickets from this week,mild,Let's close the work tickets from this week.,0.714,True,True,True
+List closed support tickets from this week,medium,Let's close the 14th from this week.,0.714,True,False,False
+List closed support tickets from this week,strong,Let's close the more tickets for this week.,0.857,True,True,True
+Give me the average daily active users,none,Give me the average daily active users.,0.143,True,True,True
+Give me the average daily active users,mild,Give me the average daily app users.,0.286,True,True,True
+Give me the average daily active users,medium,He made the average daily active users.,0.429,True,True,True
+Give me the average daily active users,strong,Hit the other shame active users.,0.714,True,True,True
+How many customers are inactive,none,How many customers are inactive?,0.2,True,True,True
+How many customers are inactive,mild,How many customers are inactive?,0.2,True,True,True
+How many customers are inactive,medium,How many customers are inactive?,0.2,True,True,True
+How many customers are inactive,strong,How many customers are inactive?,0.2,True,True,True
+Show me low priority closed tickets,none,Show me low priority closed tickets.,0.167,True,True,True
+Show me low priority closed tickets,mild,Show me low priority goes in it.,0.5,True,True,True
+Show me low priority closed tickets,medium,Shunming a priority close to the kids.,1.167,True,True,True
+Show me low priority closed tickets,strong,Show me the priority goes to this.,0.667,True,True,True
+What is today's weather like,none,What is today's weather like?,0.2,False,False,True
+What is today's weather like,mild,What is today's weather like?,0.2,False,False,True
+What is today's weather like,medium,What is today's what we like?,0.6,False,False,True
+What is today's weather like,strong,What is today's water like?,0.4,False,False,True

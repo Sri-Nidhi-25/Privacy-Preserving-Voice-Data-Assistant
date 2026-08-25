@@ -13,7 +13,7 @@ source via an LLM tool-calling step (Ollama), and reads the answer back (ElevenL
 ```bash
 pip install -r requirements.txt
 cp .env.example .env
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 ## Prerequisites
 
@@ -54,7 +54,7 @@ docker exec -it <ollama_container> ollama pull llama3.1:8b
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/data/crm
-curl.exe -X POST http://127.0.0.1:8000/voice/query -H "api-key: secret-key-change-me" -F "audio_file=@mictestwithsnaps.mp3;type=audio/mpeg""
+curl.exe -X POST http://127.0.0.1:8000/voice/query -H "api-key: secret-key-change-me" -F "audio_file=@mictestwithsnaps.mp3;type=audio/mpeg"
 ```
 ```bash
 curl.exe -X POST http://127.0.0.1:8000/voice/query -H "api-key: secret-key-change-me" -F "audio_file=@newtest.mp3;type=audio/mpeg"

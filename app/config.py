@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     MAX_RESULTS: int = 10
 
     # Voice
-    OBFUSCATION_STRENGTH: str = "mild"  # mild, medium, strong
-    STT_MODEL: str = "base"               # whisper model size
+    OBFUSCATION_STRENGTH: str = "mild"
+    STT_MODEL: str = "base"               
 
     # LLM
     OLLAMA_MODEL: str = "llama3.2:latest "
