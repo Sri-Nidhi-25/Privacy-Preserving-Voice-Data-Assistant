@@ -59,5 +59,8 @@ curl.exe -X POST http://127.0.0.1:8000/voice/query -H "api-key: secret-key-chang
 ```bash
 curl.exe -X POST http://127.0.0.1:8000/voice/query -H "api-key: secret-key-change-me" -F "audio_file=@newtest.mp3;type=audio/mpeg"
 
-python -c "import whisper; m = whisper.load_model('base'); print(m.transcribe('temp_audio/tmpo5t3r_gf.obf.wav')['text'])"    
+python -c "import json; data=json.load(open('data/support_tickets.json')); r=[t for t in data if t['priority']=='high' and t['status']=='open']; print(len(r)); [print(t) for t in r]" 
+
+python -c "import json; data=[d for d in json.load(open('data/analytics.json')) if d['metric']=='daily_active_users'][:7]; print(sum(d['value'] for d in data)/len(data))"
+
 ```

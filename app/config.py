@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     # Voice
     OBFUSCATION_STRENGTH: str = "mild"
-    STT_MODEL: str = "base"               
+    STT_MODEL: str = "small.en"               
 
     # LLM
     OLLAMA_MODEL: str = "llama3.2:latest "
@@ -22,3 +22,4 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 settings = Settings()
+

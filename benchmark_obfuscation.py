@@ -170,7 +170,7 @@ import soundfile as sf
 # NOTE: import the CLASSES, not the module itself -- `obfuscator(...)` where
 # `obfuscator` is the module (`from app.voice import obfuscator`) throws
 # "TypeError: 'module' object is not callable". You want the classes:
-from app.voice.obfuscator import VoiceObfuscator, FormantPreservingObfuscator
+from app.voice.obfuscator import FormantPreservingObfuscator, VoiceObfuscator
 from app.voice.stt import STTEngine
 from app.services.llm_orchestrator import _is_data_query
 from app.config import settings

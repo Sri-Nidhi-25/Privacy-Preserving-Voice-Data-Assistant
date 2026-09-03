@@ -8,7 +8,7 @@
 # from app.models.voice import QueryResponse
 # from app.services.llm_orchestrator import LLMOrchestrator
 # from app.utils.security import validate_api_key
-# from app.voice.obfuscator import VoiceObfuscator
+# from app.voice.obfuscator import FormantPreservingObfuscator
 # from app.voice.stt import STTEngine
 # from app.voice.tts import TTSEngine
 
@@ -19,8 +19,15 @@
 # AUDIO_DIR = Path("temp_audio")
 # AUDIO_DIR.mkdir(exist_ok=True)
 
+# # OBFUSCATION_STRENGTH ("mild"/"medium"/"strong") maps to a base semitone
+# # shift for FormantPreservingObfuscator, which takes semitone_shift directly
+# # rather than a strength label.
+# STRENGTH_TO_SEMITONES = {"mild": 2.0, "medium": 4.0, "strong": 6.0}
+
 # # Singletons
-# obfuscator = VoiceObfuscator(strength=settings.OBFUSCATION_STRENGTH)
+# obfuscator = FormantPreservingObfuscator(
+#     semitone_shift=STRENGTH_TO_SEMITONES.get(settings.OBFUSCATION_STRENGTH, 4.0)
+# )
 # stt = STTEngine(model_name=settings.STT_MODEL)
 # tts = TTSEngine(voice=settings.EDGE_TTS_VOICE)
 # orchestrator = LLMOrchestrator(model=settings.OLLAMA_MODEL)
@@ -92,17 +99,20 @@
 #         metadata=metadata,
 #     )
 
+
 import shutil
 import tempfile
 from pathlib import Path
 
+import librosa
+import soundfile as sf
 from fastapi import APIRouter, UploadFile, File, Header, HTTPException
 
 from app.config import settings
 from app.models.voice import QueryResponse
 from app.services.llm_orchestrator import LLMOrchestrator
 from app.utils.security import validate_api_key
-from app.voice.obfuscator import VoiceObfuscator
+from app.voice.obfuscator import FormantPreservingObfuscator
 from app.voice.stt import STTEngine
 from app.voice.tts import TTSEngine
 
@@ -113,8 +123,20 @@ MAX_FILE_SIZE = 25 * 1024 * 1024  # 25MB
 AUDIO_DIR = Path("temp_audio")
 AUDIO_DIR.mkdir(exist_ok=True)
 
+# OBFUSCATION_STRENGTH ("mild"/"medium"/"strong") maps to a base semitone
+# shift for FormantPreservingObfuscator, which takes semitone_shift directly
+# rather than a strength label.
+STRENGTH_TO_SEMITONES = {"mild": 2.0, "medium": 4.0, "strong": 6.0}
+
 # Singletons
-obfuscator = VoiceObfuscator(strength=settings.OBFUSCATION_STRENGTH)
+obfuscator = FormantPreservingObfuscator(
+    semitone_shift=STRENGTH_TO_SEMITONES.get(settings.OBFUSCATION_STRENGTH, 4.0),
+    # Default jitter (±1.5) can push "mild" up to ~3.5 semitones -- into
+    # "medium" territory -- which is why WER at "mild" was as bad as
+    # "medium" in benchmarking. Tighten jitter for "mild" specifically so
+    # the effective shift stays close to its intended 2.0 semitones.
+    jitter=0.5 if settings.OBFUSCATION_STRENGTH == "mild" else 1.5,
+)
 stt = STTEngine(model_name=settings.STT_MODEL)
 tts = TTSEngine(voice=settings.EDGE_TTS_VOICE)
 orchestrator = LLMOrchestrator(model=settings.OLLAMA_MODEL)
@@ -137,8 +159,19 @@ async def voice_query(audio_file: UploadFile = File(...), api_key: str = Header(
             raise HTTPException(status_code=400, detail="File too large (max 25MB)")
         input_path = Path(tmp.name)
 
+    # Normalize whatever the browser sent (webm/ogg/mp3, stereo, arbitrary
+    # sample rate, occasionally malformed headers) to a clean 16kHz mono
+    # WAV before obfuscation. FormantPreservingObfuscator reads audio with
+    # soundfile, which doesn't reliably handle every input container/codec
+    # combination -- librosa.load goes through a decode path that does, so
+    # doing that conversion up front means the obfuscator only ever sees a
+    # known-good format.
+    y, sr = librosa.load(input_path, sr=16000, mono=True)
+    normalized_path = input_path.with_suffix(".input.wav")
+    sf.write(normalized_path, y, sr)
+
     obf_path = input_path.with_suffix(".obf.wav")
-    obfuscator.obfuscate(input_path, obf_path)
+    obfuscator.obfuscate(normalized_path, obf_path)
 
     user_text, stt_confidence = stt.transcribe_with_confidence(obf_path)
 
