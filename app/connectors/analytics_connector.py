@@ -4,9 +4,13 @@ from .base import BaseConnector
 
 
 class AnalyticsConnector(BaseConnector):
-    def fetch(self, metric: str = None, days: int = None, **kwargs):
-        with open(Path("data/analytics.json")) as f:
-            data = json.load(f)
+    def fetch(self, metric: str | None = None, days: int | None = None, **kwargs):
+        try:
+            with open(Path("data/analytics.json")) as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            return [] 
+        
         if metric:
             data = [d for d in data if d.get("metric") == metric]
         if days:

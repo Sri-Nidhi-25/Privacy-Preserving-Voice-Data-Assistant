@@ -21,19 +21,6 @@ SYSTEM_PROMPT = (
     "Always use the tool‑calling interface – never output JSON manually."
 )
 
-# ----------------------------------------------------------------------------
-# Domain-aware transcript correction.
-#
-# Whisper's raw output can garble the exact keyword _is_data_query() and the
-# tool-argument parser depend on (e.g. "tickets" -> "tick it", "priority" ->
-# "pirat he"), especially once voice obfuscation is applied. A single wrong
-# word can silently flip routing (data query treated as small talk, or a
-# tool call built with an invalid argument) with no visible error.
-#
-# This pass asks the LLM to correct the transcript against known domain
-# vocabulary *before* routing decisions are made, using the same model
-# already configured for the assistant so no extra dependency is added.
-# ----------------------------------------------------------------------------
 CORRECTION_PROMPT = (
     "You are a transcript correction assistant for a voice system that only "
     "understands queries about customers (CRM), support tickets, and usage "
@@ -54,11 +41,6 @@ CORRECTION_PROMPT = (
     "no preamble, no markdown."
 )
 
-
-# Phrases that indicate the model broke character and produced meta-commentary
-# or a refusal instead of a corrected transcript. Length checks alone don't
-# catch these -- "I can't correct that request." is a perfectly plausible
-# *length* for a short transcript, it's just not a transcript.
 _REFUSAL_MARKERS = (
     "i can't", "i cannot", "i can not", "i'm not able", "i am not able",
     "as an ai", "i apologize", "i'm sorry", "sorry, i", "i don't have the ability",
@@ -340,7 +322,8 @@ class LLMOrchestrator:
                 continue
 
             raw_data = connector.fetch(**args)
-            optimized = summarize_if_large(apply_voice_limits(raw_data))
+            # optimized = summarize_if_large(apply_voice_limits(raw_data))
+            optimized = apply_voice_limits(summarize_if_large(raw_data))
             answers.append(self._format_answer(optimized, func_name))
             sources_used.append(SOURCE_LABELS.get(func_name, func_name))
             total_results += len(raw_data)
@@ -423,10 +406,28 @@ class LLMOrchestrator:
             "metadata": metadata
         }
 
+    # @staticmethod
+    # def _format_answer(data, func_name) -> str:
+    #     if not data:
+    #         return "No data found."
+    #     if func_name == "get_crm_data":
+    #         return f"Found {len(data)} customers."
+    #     if func_name == "get_support_tickets":
+    #         return f"Found {len(data)} support tickets."
+    #     if func_name == "get_analytics" and "value" in data[0]:
+    #         avg = sum(d["value"] for d in data) / len(data)
+    #         return f"Average value over the period is {avg:.0f}."
+    #     return str(data)[:200]
+
     @staticmethod
     def _format_answer(data, func_name) -> str:
         if not data:
             return "No data found."
+        
+        # Check if this is a summary dict (produced by summarize_if_large)
+        if len(data) == 1 and "summary" in data[0]:
+            return data[0]["summary"]   # e.g., "50 records found. Showing first 10."
+        
         if func_name == "get_crm_data":
             return f"Found {len(data)} customers."
         if func_name == "get_support_tickets":
