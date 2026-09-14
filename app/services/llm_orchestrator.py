@@ -64,18 +64,33 @@ def _word_overlap_ratio(a: str, b: str) -> float:
     return len(a_words & b_words) / len(a_words)
 
 
-def correct_transcript(raw_transcript: str, model: str) -> tuple[str, bool]:
+def correct_transcript(raw_transcript: str, model: str, client: Optional[Any] = None) -> dict:
     """
-    Returns (corrected_text, was_changed). Falls back to the raw transcript
-    on any failure or suspicious output, since a bad correction is worse
-    than no correction -- it would silently replace what was actually said.
+    Returns dict:
+      text: str
+      correction_attempted: bool
+      correction_changed: bool
+      correction_accepted: bool
+      correction_rejected: bool
+      fallback_used: bool
     """
     text = raw_transcript.strip()
+    res = {
+        "text": raw_transcript,
+        "correction_attempted": False,
+        "correction_changed": False,
+        "correction_accepted": False,
+        "correction_rejected": False,
+        "fallback_used": False,
+    }
     if not text:
-        return raw_transcript, False
+        return res
+
+    res["correction_attempted"] = True
+    chat_fn = client.chat if client is not None else ollama.chat
 
     try:
-        response = ollama.chat(
+        response = chat_fn(
             model=model,
             messages=[
                 {"role": "system", "content": CORRECTION_PROMPT},
@@ -86,23 +101,28 @@ def correct_transcript(raw_transcript: str, model: str) -> tuple[str, bool]:
     except Exception:
         # If the correction call itself fails (model down, timeout, etc.),
         # don't let that take down the whole query -- just skip correction.
-        return raw_transcript, False
+        res["fallback_used"] = True
+        return res
 
     # Guardrails: reject corrections that look like the model went off-script
-    # (empty, wildly longer/shorter, contains refusal/meta language, or
-    # shares too few words with the original to plausibly be "the same
-    # sentence with a few words fixed"). Any one of these firing means we
-    # trust the raw transcript over the "corrected" one.
-    if not corrected:
-        return raw_transcript, False
-    if len(corrected) > len(text) * 2 or len(corrected) < len(text) * 0.4:
-        return raw_transcript, False
+    if not corrected or len(corrected) > len(text) * 2 or len(corrected) < len(text) * 0.4:
+        res["correction_rejected"] = True
+        res["fallback_used"] = True
+        return res
     if _looks_like_refusal_or_commentary(corrected):
-        return raw_transcript, False
+        res["correction_rejected"] = True
+        res["fallback_used"] = True
+        return res
     if _word_overlap_ratio(text, corrected) < 0.5:
-        return raw_transcript, False
+        res["correction_rejected"] = True
+        res["fallback_used"] = True
+        return res
 
-    return corrected, corrected.lower() != text.lower()
+    changed = corrected.lower() != text.lower()
+    res["text"] = corrected
+    res["correction_changed"] = changed
+    res["correction_accepted"] = True
+    return res
 
 
 TOOLS = [
@@ -234,7 +254,19 @@ def _coerce_args(func_name: str, args: dict) -> dict:
 
 
 def _empty_metadata() -> dict:
-    return {"data_sources_used": [], "result_count": 0, "freshness": "unknown", "tool_calls": []}
+    return {
+        "data_sources_used": [],
+        "result_count": 0,
+        "freshness": "unknown",
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "source_last_updated": "unknown",
+        "tool_calls": [],
+        "correction_attempted": False,
+        "correction_changed": False,
+        "correction_accepted": False,
+        "correction_rejected": False,
+        "fallback_used": False,
+    }
 
 def _extract_json_from_text(text: str) -> List[Dict[str, Any]]:
     """
@@ -287,6 +319,7 @@ def _extract_json_from_text(text: str) -> List[Dict[str, Any]]:
 class LLMOrchestrator:
     def __init__(self, model: Optional[str] = None):
         self.model = (model or settings.OLLAMA_MODEL).strip()
+        self.client = ollama.Client(timeout=settings.LLM_TIMEOUT_SECONDS)
         self.connector_map = {
             "get_crm_data": CRMConnector(),
             "get_support_tickets": SupportConnector(),
@@ -299,6 +332,7 @@ class LLMOrchestrator:
         sources_used = []
         total_results = 0
         call_log = []
+        source_timestamps = []
 
         for call in tool_calls:
             func_name = call["function"]["name"]
@@ -306,23 +340,30 @@ class LLMOrchestrator:
 
             valid, error_msg = _validate_args(func_name, args)
             if not valid:
-                return (
-                    f"Sorry, I couldn't interpret that filter: {error_msg}",
-                    {
-                        "data_sources_used": [],
-                        "result_count": 0,
-                        "freshness": "unknown",
-                        "validation_error": error_msg,
-                        "invalid_args": args,
-                    }
-                )
+                err_meta = _empty_metadata()
+                err_meta.update({
+                    "validation_error": error_msg,
+                    "invalid_args": args,
+                })
+                return f"Sorry, I couldn't interpret that filter: {error_msg}", err_meta
 
             connector = self.connector_map.get(func_name)
             if not connector:
                 continue
 
-            raw_data = connector.fetch(**args)
-            # optimized = summarize_if_large(apply_voice_limits(raw_data))
+            conn_result = connector.fetch_result(**args)
+            if not conn_result.success:
+                err_meta = _empty_metadata()
+                err_meta.update({
+                    "connector_error": conn_result.error,
+                    "tool_calls": call_log,
+                })
+                return f"Sorry, could not retrieve data from {func_name}: {conn_result.error}", err_meta
+
+            raw_data = conn_result.data
+            if conn_result.source_last_updated:
+                source_timestamps.append(conn_result.source_last_updated)
+
             optimized = apply_voice_limits(summarize_if_large(raw_data))
             answers.append(self._format_answer(optimized, func_name))
             sources_used.append(SOURCE_LABELS.get(func_name, func_name))
@@ -336,10 +377,14 @@ class LLMOrchestrator:
         if not answers:
             return "Sorry, I couldn't find the right data source.", _empty_metadata()
 
+        source_last_updated = max(source_timestamps) if source_timestamps else "unknown"
+        now_iso = datetime.now(timezone.utc).isoformat()
         metadata = {
             "data_sources_used": sources_used,
             "result_count": total_results,
-            "freshness": f"Data as of {datetime.now(timezone.utc).isoformat()}",
+            "retrieved_at": now_iso,
+            "source_last_updated": source_last_updated,
+            "freshness": f"Source last updated: {source_last_updated}" if source_last_updated != "unknown" else "unknown",
             "tool_calls": call_log,
         }
         return " ".join(answers), metadata
@@ -347,64 +392,72 @@ class LLMOrchestrator:
     def process_query(self, user_text: str) -> dict:
         # --- Correction pass: fix likely STT garbling against known domain
         # vocabulary before any routing decision is made. ---
-        corrected_text, was_corrected = correct_transcript(user_text, self.model)
+        corr = correct_transcript(user_text, self.model, client=self.client)
+        corrected_text = corr["text"]
 
-        if not _is_data_query(corrected_text):
-            response = ollama.chat(
+        def _apply_corr_meta(meta: dict) -> dict:
+            meta["raw_transcript"] = user_text
+            meta["corrected_transcript"] = corrected_text
+            meta["correction_attempted"] = corr["correction_attempted"]
+            meta["correction_changed"] = corr["correction_changed"]
+            meta["correction_accepted"] = corr["correction_accepted"]
+            meta["correction_rejected"] = corr["correction_rejected"]
+            meta["fallback_used"] = corr["fallback_used"]
+            meta["transcript_was_corrected"] = corr["correction_changed"]
+            return meta
+
+        try:
+            if not _is_data_query(corrected_text):
+                response = self.client.chat(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": corrected_text + " (Answer directly, no tools or APIs.)"}
+                    ],
+                )
+                metadata = _apply_corr_meta(_empty_metadata())
+                return {
+                    "answer": response["message"]["content"],
+                    "metadata": metadata
+                }
+
+            response = self.client.chat(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": corrected_text + " (Answer directly, no tools or APIs.)"}
+                    {"role": "user", "content": corrected_text},
                 ],
+                tools=TOOLS,
             )
-            metadata = _empty_metadata()
-            metadata["raw_transcript"] = user_text
-            metadata["corrected_transcript"] = corrected_text
-            metadata["transcript_was_corrected"] = was_corrected
+            message = response["message"]
+            tool_calls = message.get("tool_calls")
+
+            if tool_calls:
+                answer, metadata = self._execute_tool_calls(tool_calls)
+                return {"answer": answer, "metadata": _apply_corr_meta(metadata)}
+
+            content = message.get("content", "")
+            extracted_calls = _extract_json_from_text(content)
+            if extracted_calls:
+                synthetic_calls = [
+                    {"function": {"name": c["name"], "arguments": c["arguments"]}}
+                    for c in extracted_calls
+                ]
+                answer, metadata = self._execute_tool_calls(synthetic_calls)
+                return {"answer": answer, "metadata": _apply_corr_meta(metadata)}
+
+            metadata = _apply_corr_meta(_empty_metadata())
             return {
-                "answer": response["message"]["content"],
+                "answer": content if content else "I didn't understand that query.",
                 "metadata": metadata
             }
-
-        response = ollama.chat(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": corrected_text},
-            ],
-            tools=TOOLS,
-        )
-        message = response["message"]
-        tool_calls = message.get("tool_calls")
-
-        if tool_calls:
-            answer, metadata = self._execute_tool_calls(tool_calls)
-            metadata["raw_transcript"] = user_text
-            metadata["corrected_transcript"] = corrected_text
-            metadata["transcript_was_corrected"] = was_corrected
-            return {"answer": answer, "metadata": metadata}
-
-        content = message.get("content", "")
-        extracted_calls = _extract_json_from_text(content)
-        if extracted_calls:
-            synthetic_calls = [
-                {"function": {"name": c["name"], "arguments": c["arguments"]}}
-                for c in extracted_calls
-            ]
-            answer, metadata = self._execute_tool_calls(synthetic_calls)
-            metadata["raw_transcript"] = user_text
-            metadata["corrected_transcript"] = corrected_text
-            metadata["transcript_was_corrected"] = was_corrected
-            return {"answer": answer, "metadata": metadata}
-
-        metadata = _empty_metadata()
-        metadata["raw_transcript"] = user_text
-        metadata["corrected_transcript"] = corrected_text
-        metadata["transcript_was_corrected"] = was_corrected
-        return {
-            "answer": content if content else "I didn't understand that query.",
-            "metadata": metadata
-        }
+        except Exception as exc:
+            metadata = _apply_corr_meta(_empty_metadata())
+            metadata["llm_error"] = str(exc)
+            return {
+                "answer": "Sorry, I am currently unable to process your request with the language model.",
+                "metadata": metadata,
+            }
 
     @staticmethod
     def _format_answer(data, func_name) -> str:

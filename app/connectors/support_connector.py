@@ -5,9 +5,12 @@ from .base import BaseConnector
 
 
 class SupportConnector(BaseConnector):
+    def __init__(self, data_path: Optional[Path] = None):
+        self.data_path = data_path or Path("data/support_tickets.json")
+
     def fetch(self, status: Optional[str] = None, priority: Optional[str] = None, limit: Optional[int] = None, **kwargs):
         try:
-            with open(Path("data/support_tickets.json")) as f:
+            with open(self.data_path) as f:
                 tickets = json.load(f)
         except FileNotFoundError:
             return [] 

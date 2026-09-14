@@ -1,647 +1,185 @@
-# Privacy-Preserving Voice Data Assistant
+﻿# Privacy-Preserving Voice Data Assistant (Phase 1 Prototype)
 
-A complete, end‑to‑end voice query system that:
-- **Obfuscates** the speaker’s voice (pitch shifts while preserving formants) to protect identity.
-- **Transcribes** the query with OpenAI Whisper.
-- **Routes** the intent via an LLM (Ollama) to the correct internal data source (CRM, support tickets, or analytics).
-- **Responds** with a natural‑language answer and optional audio (TTS).
+A local, privacy-preserving voice query assistant that performs speaker voice obfuscation, automatic speech recognition (Whisper), domain transcript correction, query classification, data retrieval, and text-to-speech synthesis (Edge-TTS).
 
-This is a self‑contained FastAPI service with mock data connectors, designed for demonstration and extension.
+> **Deployment Note:** This is an evaluation-ready local prototype designed for controlled experimentation and reliability measurement. It is intended for local single-node development, not high-concurrency enterprise cloud deployment.
 
 ---
 
-## Table of Contents
+## 1. Core Architecture Pipeline
 
-- [Features](#features)
-- [Architecture Overview](#architecture-overview)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation & Setup](#installation--setup)
-- [Configuration (.env)](#configuration-env)
-- [API Endpoints](#api-endpoints)
-- [Testing the Voice Query](#testing-the-voice-query)
-- [Using Docker](#using-docker)
-- [Known Issues & Workarounds](#known-issues--workarounds)
-- [Future Improvements / Roadmap](#future-improvements--roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## Features
-
-| Feature | How It Works |
-|---------|--------------|
-| **Speaker obfuscation** | Uses the WORLD vocoder to shift pitch (F0) while keeping the spectral envelope (formants) intact. This preserves transcription accuracy far better than naive pitch‑shifting. |
-| **Speech‑to‑Text** | Whisper (configurable model, default `base`) with a multi‑temperature decoding strategy to mitigate hallucinations. Confidence scores are computed and used to reject low‑quality audio. |
-| **Intent classification & tool calling** | An LLM (Ollama) decides whether to query CRM, support tickets, or analytics. It can call functions with validated arguments. |
-| **Text‑to‑Speech** | Edge TTS (free, no API key) converts the answer to an MP3 file. |
-| **Transcript correction** | An LLM‑based pre‑processing step corrects garbled domain‑specific words (e.g., “tickets” → “tick it”) before routing, reducing misclassification. |
-| **REST API** | Clean endpoints for health checks, raw data access (debugging), and voice queries. |
-| **Docker support** | Containerised deployment with Ollama included. |
-
----
-
-## Architecture Overview
-
-```
-┌─────────────┐      ┌────────────────────┐      ┌─────────────────┐
-│  User       │      │  FastAPI Router    │      │  Obfuscator     │
-│ (upload MP3)│─────▶│  (/voice/query)    │─────▶│  (WORLD vocoder)│
-└─────────────┘      └────────────────────┘      └─────────────────┘
-                            │                            │
-                            ▼                            │
-                     ┌────────────────────┐              │
-                     │  STT (Whisper)     │◀─────────────┘
-                     │  + confidence      │
-                     └────────────────────┘
-                            │
-                            ▼
-                     ┌────────────────────┐
-                     │  LLM Orchestrator  │
-                     │  - correction      │
-                     │  - tool call       │
-                     └────────────────────┘
-                            │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-         ┌──────────┐ ┌──────────┐ ┌──────────┐
-         │   CRM    │ │ Support  │ │Analytics │
-         │Connector │ │Connector │ │Connector │
-         └──────────┘ └──────────┘ └──────────┘
-              │             │             │
-              └─────────────┼─────────────┘
-                            ▼
-                     ┌────────────────────┐
-                     │  TTS (Edge TTS)    │
-                     │  (answer audio)    │
-                     └────────────────────┘
-                            │
-                            ▼
-                     ┌────────────────────┐
-                     │  JSON Response     │
-                     │  + audio URLs      │
-                     └────────────────────┘
+```text
+Audio Upload (WAV, MP3, WebM, OGG)
+  │
+  ▼
+1. Audio Validation Layer (size, decodability, duration checks)
+  │
+  ▼
+2. Formant-Preserving Obfuscation (WORLD Vocoder F0 pitch shifting)
+  │
+  ▼
+3. Speech-to-Text (Whisper STT with multi-temperature retry + confidence scores)
+  │  ├── [Low confidence detected] ──▶ Abstain (safely prompt user for retry)
+  ▼  └── [Acceptable confidence]
+4. Domain Transcript Correction (LLM pass with overlap & refusal guardrails)
+  │
+  ▼
+5. Routing & Tool Argument Validation (Schema-checked parameters)
+  │  ├── [Invalid tool arguments] ──▶ Reject immediately; connector NEVER executed
+  ▼  └── [Valid tool arguments]
+6. Connector Execution (Mock CRM, Support, Analytics connectors)
+  │
+  ▼
+7. Answer Generation & Voice Optimization (Summarization + voice limiting)
+  │
+  ▼
+8. Text-to-Speech Synthesis (Edge-TTS with fallback preservation of text)
+  │
+  ▼
+API JSON Response + Static Audio URLs + Observable Stage Latency & Metadata
 ```
 
-- **Obfuscator** – implemented in `app/voice/obfuscator.py` as `FormantPreservingObfuscator`. Uses `pyworld`, `librosa`, and `soundfile`.
-- **STT** – `app/voice/stt.py`. Loads audio with `librosa` (bypasses FFmpeg) and passes a NumPy array to Whisper.
-- **LLM Orchestrator** – `app/services/llm_orchestrator.py`. Handles correction prompt, tool definitions, validation, and execution.
-- **Connectors** – mock data sources in `app/connectors/`. They return lists of dicts from JSON files.
-- **TTS** – `app/voice/tts.py`. Uses Edge TTS.
+---
+
+## 2. Phase 1 Reliability & Observability Improvements
+
+- **Central Failure Taxonomy:** Centralized `FailureType` enum and `PipelineError` in `app/failure.py` preventing raw stack traces or internal filesystem paths from leaking to clients.
+- **Audio Validation:** Explicit pre-processing validation (`app/voice/audio_validation.py`) checking file existence, size, duration limits, and audio decodability before running vocoders or Whisper.
+- **Temporary File Lifecycle:** Guaranteed cleanup of raw user audio uploads and intermediate uncompressed WAV files in `try ... finally` blocks on both success and failure paths. Periodic background cleaner prunes stale files.
+- **Structured JSON Logging:** Machine-readable event logging with ISO-8601 UTC timestamps, unique `request_id`, stage labels, and latency durations. Raw user speech and transcripts are withheld from logs by default.
+- **Request Traceability:** Unique UUID4 `request_id` generated for every incoming request and propagated through logs and response metadata.
+- **Stage-Level Latency:** Timing measurements in milliseconds for `validation`, `obfuscation`, `stt`, `orchestrator`, `tts`, and `total` request duration.
+- **Honest Data Freshness:** Clear distinction between `retrieved_at` (query execution time) and `source_last_updated` (actual underlying data modification time). Unknown timestamps are reported honestly as `"unknown"`.
+- **Liveness & Readiness Health Probes:**
+  - `GET /health/live`: Fast process liveness check.
+  - `GET /health/ready`: Deep dependency readiness check inspecting Whisper, Ollama, TTS, and data file availability, returning `ready`, `degraded`, or `unavailable`.
+- **Configurable CORS & Startup Validation:** Fail-fast validation in `app/config.py` validating models, timeouts, limits, and origins at startup.
 
 ---
 
-## Project Structure (after restructuring)
+## 3. Project Structure
 
-```
+```text
 .
 ├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── config.py
-│   ├── connectors/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── crm_connector.py
-│   │   ├── support_connector.py
-│   │   └── analytics_connector.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── common.py
-│   │   └── voice.py
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── health.py
-│   │   ├── data.py
-│   │   └── voice.py
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── llm_orchestrator.py
-│   │   ├── business_rules.py
-│   │   ├── data_identifier.py
-│   │   └── voice_optimizer.py
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   ├── logging.py
-│   │   └── security.py
-│   └── voice/
-│       ├── __init__.py
-│       ├── obfuscator.py
-│       ├── stt.py
-│       └── tts.py
-├── data/                     (create this; place your mock JSON files here)
-│   ├── customers.json
-│   ├── support_tickets.json
-│   └── analytics.json
-├── temp_audio/               (auto‑created; used for temporary audio files)
-├── .env.example
-├── .env                      (copy from example)
-├── requirements.txt
-├── docker-compose.yml
-├── Dockerfile
-├── benchmark_obfuscation.py  (optional benchmarking script)
-└── README.md
+│   ├── config.py                 # Hardened configuration & startup validation
+│   ├── failure.py                # Central FailureType taxonomy & PipelineError
+│   ├── main.py                   # FastAPI app, CORS, error handlers, static mount
+│   ├── connectors/               # Data connectors (BaseConnector, CRM, Support, Analytics)
+│   ├── models/                   # Pydantic schemas (common, voice)
+│   ├── routers/                  # API routers (voice, data, health)
+│   ├── services/                 # LLM orchestration, business rules, summarization
+│   ├── utils/                    # Structured JSON logging, API key security
+│   └── voice/                    # Audio validation, WORLD obfuscator, Whisper STT, TTS
+├── data/                         # Mock JSON data files (customers, tickets, analytics)
+├── docs/
+│   └── reliability_invariants.md # Core safety & behavioral invariants
+├── evaluation/                   # Reproducible experiment benchmarks
+│   ├── benchmark_obfuscation.py
+│   └── README.md
+├── tests/                        # Comprehensive automated test suite
+├── temp_audio/                   # Ephemeral directory for audio processing
+├── voice_chat.html               # Single-page browser audio recording client
+├── .env.example                  # Environment configuration template
+└── requirements.txt              # Application and testing dependencies
 ```
 
 ---
 
-## Prerequisites
+## 4. Setup & Running Locally
 
-- **Python 3.10+**
-- **Ollama** – installed locally, or use the Docker setup.
-- **(Optional) FFmpeg** – recommended for broader audio format support, though the STT engine loads audio via `librosa` and can handle many formats without it. However, for MP3/WebM decoding on some systems, `librosa` may fall back to FFmpeg – installing it is a safe bet.
+### Prerequisites
+- Python 3.10+
+- [Ollama](https://ollama.ai) running locally with `llama3.2:latest`
 
----
-
-## Installation & Setup
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Sri-Nidhi-25/Privacy-Preserving-Voice-Data-Assistant.git
-cd Privacy-Preserving-Voice-Data-Assistant
-```
-
-### 2. Create a Virtual Environment (recommended)
+### 1. Installation
 ```bash
 python -m venv venv
-source venv/bin/activate      # Linux/macOS
-venv\Scripts\activate         # Windows
-```
+# On Windows:
+.\venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
 
-### 3. Install Dependencies
-A complete, end‑to‑end voice query system that:
-- **Obfuscates** the speaker’s voice (pitch shifts while preserving formants) to protect identity.
-- **Transcribes** the query with OpenAI Whisper.
-- **Routes** the intent via an LLM (Ollama) to the correct internal data source (CRM, support tickets, or analytics).
-- **Responds** with a natural‑language answer and optional audio (TTS).
-
-This is a self‑contained FastAPI service with mock data connectors, designed for demonstration and extension.
-
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Architecture Overview](#architecture-overview)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation & Setup](#installation--setup)
-- [Configuration (.env)](#configuration-env)
-- [API Endpoints](#api-endpoints)
-- [Testing the Voice Query](#testing-the-voice-query)
-- [Using Docker](#using-docker)
-- [Known Issues & Workarounds](#known-issues--workarounds)
-- [Future Improvements / Roadmap](#future-improvements--roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## Features
-
-| Feature | How It Works |
-|---------|--------------|
-| **Speaker obfuscation** | Uses the WORLD vocoder to shift pitch (F0) while keeping the spectral envelope (formants) intact. This preserves transcription accuracy far better than naive pitch‑shifting. |
-| **Speech‑to‑Text** | Whisper (configurable model, default `base`) with a multi‑temperature decoding strategy to mitigate hallucinations. Confidence scores are computed and used to reject low‑quality audio. |
-| **Intent classification & tool calling** | An LLM (Ollama) decides whether to query CRM, support tickets, or analytics. It can call functions with validated arguments. |
-| **Text‑to‑Speech** | Edge TTS (free, no API key) converts the answer to an MP3 file. |
-| **Transcript correction** | An LLM‑based pre‑processing step corrects garbled domain‑specific words (e.g., “tickets” → “tick it”) before routing, reducing misclassification. |
-| **REST API** | Clean endpoints for health checks, raw data access (debugging), and voice queries. |
-| **Docker support** | Containerised deployment with Ollama included. |
-
----
-
-## Architecture Overview
-
-```
-┌─────────────┐      ┌────────────────────┐      ┌─────────────────┐
-│  User       │      │  FastAPI Router    │      │  Obfuscator     │
-│ (upload MP3)│─────▶│  (/voice/query)    │─────▶│  (WORLD vocoder)│
-└─────────────┘      └────────────────────┘      └─────────────────┘
-                            │                            │
-                            ▼                            │
-                     ┌────────────────────┐              │
-                     │  STT (Whisper)     │◀─────────────┘
-                     │  + confidence      │
-                     └────────────────────┘
-                            │
-                            ▼
-                     ┌────────────────────┐
-                     │  LLM Orchestrator  │
-                     │  - correction      │
-                     │  - tool call       │
-                     └────────────────────┘
-                            │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-         ┌──────────┐ ┌──────────┐ ┌──────────┐
-         │   CRM    │ │ Support  │ │Analytics │
-         │Connector │ │Connector │ │Connector │
-         └──────────┘ └──────────┘ └──────────┘
-              │             │             │
-              └─────────────┼─────────────┘
-                            ▼
-                     ┌────────────────────┐
-                     │  TTS (Edge TTS)    │
-                     │  (answer audio)    │
-                     └────────────────────┘
-                            │
-                            ▼
-                     ┌────────────────────┐
-                     │  JSON Response     │
-                     │  + audio URLs      │
-                     └────────────────────┘
-```
-
-- **Obfuscator** – implemented in `app/voice/obfuscator.py` as `FormantPreservingObfuscator`. Uses `pyworld`, `librosa`, and `soundfile`.
-- **STT** – `app/voice/stt.py`. Loads audio with `librosa` (bypasses FFmpeg) and passes a NumPy array to Whisper.
-- **LLM Orchestrator** – `app/services/llm_orchestrator.py`. Handles correction prompt, tool definitions, validation, and execution.
-- **Connectors** – mock data sources in `app/connectors/`. They return lists of dicts from JSON files.
-- **TTS** – `app/voice/tts.py`. Uses Edge TTS.
-
----
-
-## Project Structure (after restructuring)
-
-```
-.
-├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── config.py
-│   ├── connectors/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── crm_connector.py
-│   │   ├── support_connector.py
-│   │   └── analytics_connector.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── common.py
-│   │   └── voice.py
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── health.py
-│   │   ├── data.py
-│   │   └── voice.py
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── llm_orchestrator.py
-│   │   ├── business_rules.py
-│   │   ├── data_identifier.py
-│   │   └── voice_optimizer.py
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   ├── logging.py
-│   │   └── security.py
-│   └── voice/
-│       ├── __init__.py
-│       ├── obfuscator.py
-│       ├── stt.py
-│       └── tts.py
-├── data/                     (create this; place your mock JSON files here)
-│   ├── customers.json
-│   ├── support_tickets.json
-│   └── analytics.json
-├── temp_audio/               (auto‑created; used for temporary audio files)
-├── .env.example
-├── .env                      (copy from example)
-├── requirements.txt
-├── docker-compose.yml
-├── Dockerfile
-├── benchmark_obfuscation.py  (optional benchmarking script)
-└── README.md
-```
-
----
-
-## Prerequisites
-
-- **Python 3.10+**
-- **Ollama** – installed locally, or use the Docker setup.
-- **(Optional) FFmpeg** – recommended for broader audio format support, though the STT engine loads audio via `librosa` and can handle many formats without it. However, for MP3/WebM decoding on some systems, `librosa` may fall back to FFmpeg – installing it is a safe bet.
-
----
-
-## Installation & Setup
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Sri-Nidhi-25/Privacy-Preserving-Voice-Data-Assistant.git
-cd Privacy-Preserving-Voice-Data-Assistant
-```
-
-### 2. Create a Virtual Environment (recommended)
-```bash
-python -m venv venv
-source venv/bin/activate      # Linux/macOS
-venv\Scripts\activate         # Windows
-```
-
-### 3. Install Dependencies
-```bash
 pip install -r requirements.txt
 ```
 
-### 4. Set Up Environment Variables
-```bash
-```
-
-### 4. Set Up Environment Variables
+### 2. Configure Environment
 ```bash
 cp .env.example .env
 ```
-Edit `.env` to adjust:
-- `OBFUSCATION_STRENGTH` – `mild`, `medium`, or `strong`.
-- `STT_MODEL` – Whisper model size (e.g., `base`, `small.en`, `medium.en`).
-- `OLLAMA_MODEL` – ensure no trailing space (e.g., `llama3.2:latest`).
-- `EDGE_TTS_VOICE` – any Edge TTS voice name.
-- `API_KEY` – your secret key for the voice endpoint.
+Ensure your `.env` contains your desired `API_KEY` and settings.
 
-### 5. Prepare Mock Data
-Create the `data/` directory and populate it with three JSON files. Example structures:
-
-**`customers.json`**:
-```json
-[{"id": 1, "name": "Alice", "status": "active"}, ...]
-```
-
-**`support_tickets.json`**:
-```json
-[{"ticket_id": 101, "status": "open", "priority": "high"}, ...]
-```
-
-**`analytics.json`**:
-```json
-[{"metric": "daily_active_users", "value": 1234, "date": "2026-01-01"}, ...]
-```
-
-If any file is missing, the connectors now return an empty list gracefully (error handling added).
-
-### 6. Run the Server
-```
-Edit `.env` to adjust:
-- `OBFUSCATION_STRENGTH` – `mild`, `medium`, or `strong`.
-- `STT_MODEL` – Whisper model size (e.g., `base`, `small.en`, `medium.en`).
-- `OLLAMA_MODEL` – ensure no trailing space (e.g., `llama3.2:latest`).
-- `EDGE_TTS_VOICE` – any Edge TTS voice name.
-- `API_KEY` – your secret key for the voice endpoint.
-
-### 5. Prepare Mock Data
-Create the `data/` directory and populate it with three JSON files. Example structures:
-
-**`customers.json`**:
-```json
-[{"id": 1, "name": "Alice", "status": "active"}, ...]
-```
-
-**`support_tickets.json`**:
-```json
-[{"ticket_id": 101, "status": "open", "priority": "high"}, ...]
-```
-
-**`analytics.json`**:
-```json
-[{"metric": "daily_active_users", "value": 1234, "date": "2026-01-01"}, ...]
-```
-
-If any file is missing, the connectors now return an empty list gracefully (error handling added).
-
-### 6. Run the Server
+### 3. Run FastAPI Service
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
-The API will be available at `http://localhost:8000`.
+Open `http://127.0.0.1:8000/` in your browser to interact with the voice client.
 
 ---
 
-## Configuration (.env)
+## 5. API Reference
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `APP_NAME` | Application name | `"Voice Data Assistant"` |
-| `MAX_RESULTS` | Maximum number of records to return in a query | `10` |
-| `OBFUSCATION_STRENGTH` | `mild`, `medium`, or `strong` | `mild` |
-| `STT_MODEL` | Whisper model name | `base` |
-| `OLLAMA_MODEL` | Ollama model to use | `llama3.2:latest` |
-| `EDGE_TTS_VOICE` | Edge TTS voice | `en-US-GuyNeural` |
-| `API_KEY` | Authentication for `/voice/query` | `secret-key-change-me` |
+### Health Probes
+- `GET /health/live`: Returns `{"status": "alive"}`.
+- `GET /health/ready`: Returns component readiness details (`whisper`, `ollama`, `tts`, `crm`, `support`, `analytics`).
+- `GET /health`: Backward-compatible alias for `/health/ready`.
 
----
+### Data Endpoints (Debugging)
+- `GET /data/{source}?limit=10`: Returns mock data records from `crm`, `support`, or `analytics`.
 
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/health` | Returns `{"status": "ok"}`. |
-| `GET` | `/data/{source}` | Returns raw mock data from `crm`, `support`, or `analytics` (debugging only). |
-| `POST` | `/voice/query` | Main voice query endpoint. Requires `api-key` header and `audio_file` multipart data. |
-
-### POST `/voice/query`
-
-**Request:**
-- Header: `api-key: <your_key>`
-- Body: `multipart/form-data` with key `audio_file` containing the audio file.
-
-**Supported audio formats:** WAV, MP3, WebM, OGG. Internally, they are loaded via `librosa` (no FFmpeg required for basic formats, but FFmpeg may be needed for exotic ones).
-
-**Response (JSON):**
-```json
-{
-  "obfuscated_audio_url": "/static/<obfuscated_file>.wav",
-  "answer_audio_url": "/static/<answer_file>.mp3",
-  "transcript": "Show me all high priority open tickets",
-  "answer_text": "Found 3 open high-priority tickets.",
-  "metadata": {
-    "data_sources_used": ["support"],
-    "result_count": 3,
-    "freshness": "Data as of 2026-09-05T12:00:00Z",
-    "tool_calls": [...],
-    "low_confidence_transcription": false,
-    "stt_confidence": { "avg_logprob": -0.45, "no_speech_prob": 0.12, ... }
-  }
-}
-```
-
-- If the STT confidence is low, the system returns a generic “Sorry, I didn’t catch that” without calling the LLM.
-- The audio URLs point to files served from `temp_audio/`; they are automatically cleaned up after the response is sent (via `BackgroundTasks`).
+### Voice Query
+- `POST /voice/query`
+  - **Headers:** `api-key: <API_KEY>`
+  - **Body (multipart/form-data):** `audio_file` (WAV, MP3, WebM, OGG)
+  - **Response (JSON):**
+    ```json
+    {
+      "obfuscated_audio_url": "/static/xxx.obf.wav",
+      "answer_audio_url": "/static/xxx.answer.mp3",
+      "transcript": "Show me all high priority open tickets",
+      "answer_text": "Found 3 support tickets.",
+      "metadata": {
+        "request_id": "c7f7663e-72ba-4b53-9d41-3b74ad50c4ce",
+        "data_sources_used": ["support"],
+        "result_count": 3,
+        "retrieved_at": "2026-09-14T14:30:00.000Z",
+        "source_last_updated": "2026-09-14T12:00:00.000Z",
+        "low_confidence_transcription": false,
+        "stt_confidence": {
+          "avg_logprob": -0.21,
+          "no_speech_prob": 0.01,
+          "compression_ratio": 1.05,
+          "low_confidence": false
+        },
+        "latency_ms": {
+          "validation": 25,
+          "obfuscation": 180,
+          "stt": 820,
+          "orchestrator": 450,
+          "tts": 320,
+          "total": 1795
+        }
+      }
+    }
+    ```
 
 ---
 
-## Testing the Voice Query
-uvicorn app.main:app --reload
-```
-The API will be available at `http://localhost:8000`.
+## 6. Running Automated Tests
 
----
-
-## Configuration (.env)
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `APP_NAME` | Application name | `"Voice Data Assistant"` |
-| `MAX_RESULTS` | Maximum number of records to return in a query | `10` |
-| `OBFUSCATION_STRENGTH` | `mild`, `medium`, or `strong` | `mild` |
-| `STT_MODEL` | Whisper model name | `base` |
-| `OLLAMA_MODEL` | Ollama model to use | `llama3.2:latest` |
-| `EDGE_TTS_VOICE` | Edge TTS voice | `en-US-GuyNeural` |
-| `API_KEY` | Authentication for `/voice/query` | `secret-key-change-me` |
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/health` | Returns `{"status": "ok"}`. |
-| `GET` | `/data/{source}` | Returns raw mock data from `crm`, `support`, or `analytics` (debugging only). |
-| `POST` | `/voice/query` | Main voice query endpoint. Requires `api-key` header and `audio_file` multipart data. |
-
-### POST `/voice/query`
-
-**Request:**
-- Header: `api-key: <your_key>`
-- Body: `multipart/form-data` with key `audio_file` containing the audio file.
-
-**Supported audio formats:** WAV, MP3, WebM, OGG. Internally, they are loaded via `librosa` (no FFmpeg required for basic formats, but FFmpeg may be needed for exotic ones).
-
-**Response (JSON):**
-```json
-{
-  "obfuscated_audio_url": "/static/<obfuscated_file>.wav",
-  "answer_audio_url": "/static/<answer_file>.mp3",
-  "transcript": "Show me all high priority open tickets",
-  "answer_text": "Found 3 open high-priority tickets.",
-  "metadata": {
-    "data_sources_used": ["support"],
-    "result_count": 3,
-    "freshness": "Data as of 2026-09-05T12:00:00Z",
-    "tool_calls": [...],
-    "low_confidence_transcription": false,
-    "stt_confidence": { "avg_logprob": -0.45, "no_speech_prob": 0.12, ... }
-  }
-}
-```
-
-- If the STT confidence is low, the system returns a generic “Sorry, I didn’t catch that” without calling the LLM.
-- The audio URLs point to files served from `temp_audio/`; they are automatically cleaned up after the response is sent (via `BackgroundTasks`).
-
----
-
-## Testing the Voice Query
-
-## Test
-```bash
-curl http://localhost:8000/health
-curl http://localhost:8000/data/crm
-```
-
-Using `curl` (Windows users: use `curl.exe`):
+Run the complete 33-test suite covering config, audio validation, obfuscation, STT, correction, routing, tool validation, connectors, health states, and core invariants:
 
 ```bash
-curl -X POST http://localhost:8000/voice/query \
-  -H "api-key: secret-key-change-me" \
-  -F "audio_file=@path/to/your_audio.mp3;type=audio/mpeg" 
+pytest tests/ -v
 ```
-
-Replace `path/to/your_audio.mp3` with a real file. Supported types: `audio/wav`, `audio/mpeg`, `audio/webm`, `audio/ogg`.
 
 ---
 
-## Using Docker
+## 7. Running Obfuscation Benchmarks
 
-### 1. Build and start containers
-```bash
-docker-compose up --build
-```
-
-### 2. Pull the Ollama model (inside the container)
-```bash
-docker exec -it <ollama_container_name> ollama pull llama3.2:latest
-```
-(Replace `<ollama_container_name>` with the actual container name, e.g., `ollama`.)
-
-### 3. Access the API
-The service will be available at `http://localhost:8000`.
-
-```
-
-Using `curl` (Windows users: use `curl.exe`):
+Run reproducible evaluation benchmarks comparing acoustic methods against word error rates (WER):
 
 ```bash
-curl -X POST http://localhost:8000/voice/query \
-  -H "api-key: secret-key-change-me" \
-  -F "audio_file=@path/to/your_audio.mp3;type=audio/mpeg" 
+python evaluation/benchmark_obfuscation.py --seed 42
 ```
-
-Replace `path/to/your_audio.mp3` with a real file. Supported types: `audio/wav`, `audio/mpeg`, `audio/webm`, `audio/ogg`.
-
----
-
-## Using Docker
-
-### 1. Build and start containers
-```bash
-docker-compose up --build
-```
-
-### 2. Pull the Ollama model (inside the container)
-```bash
-docker exec -it <ollama_container_name> ollama pull llama3.2:latest
-```
-(Replace `<ollama_container_name>` with the actual container name, e.g., `ollama`.)
-
-### 3. Access the API
-The service will be available at `http://localhost:8000`.
-
-```bash
-curl.exe -X POST http://127.0.0.1:8000/voice/query -H "api-key: secret-key-change-me" -F "audio_file=@newtest.mp3;type=audio/mpeg"
-```
-Testing the data
-```
-Testing the data
-
-```bash
-```bash
-python -c "import json; data=json.load(open('data/support_tickets.json')); r=[t for t in data if t['priority']=='high' and t['status']=='open']; print(len(r)); [print(t) for t in r]" 
-
-python -c "import json; data=[d for d in json.load(open('data/analytics.json')) if d['metric']=='daily_active_users'][:7]; print(sum(d['value'] for d in data)/len(data))"
-
-```
----
-
-## Known Issues & Workarounds
-
-| Issue | Workaround / Status |
-|-------|---------------------|
-| **Audio pre‑conversion not implemented** | The system expects the uploaded file to be readable by `librosa`. For most browser‑uploaded MP3/WebM files, this works. For corrupted `.mpeg` files with embedded JSON, it may fail. **Workaround:** Use clean WAV/MP3 files. A fix (converting to 16kHz mono WAV before obfuscation) is planned. |
-| **FFmpeg optional but recommended** | While `librosa` handles many formats, installing FFmpeg improves robustness. |
-| **Temp files cleanup** | **Fixed** – files are deleted after response via `BackgroundTasks`. |
-| **Mock JSON files missing** | **Fixed** – connectors now return `[]` gracefully. |
-| **Large result set summarisation** | **Fixed** – summarisation now occurs before limiting; the LLM returns a summary count. |
-| **Jitter too high for `mild`** | **Fixed** – jitter is now `0.5` for mild, `1.5` for others. |
-| **`/data` endpoint ignores `limit`** | This endpoint is for debugging only; the voice pipeline uses `MAX_RESULTS` properly. Not fixed, but not critical. |
-| **Ollama model name trailing space** | **Fixed** in `.env` and `config.py`. |
-
----
-
-## Future Improvements / Roadmap
-
-1. **Audio pre‑conversion** – automatically resample and downmix to 16kHz mono WAV before obfuscation, to guarantee compatibility with `soundfile`.
-2. **Real data connectors** – replace mock JSON with actual database/API integrations (e.g., PostgreSQL, REST APIs).
-3. **Streaming responses** – return TTS audio as a stream instead of saving to disk.
-4. **Enhanced confidence rejection** – allow user to retry with clearer speech.
-5. **Multi‑language support** – expand Whisper to other languages and adjust correction prompts accordingly.
-6. **Benchmark automation** – integrate the benchmark script into CI/CD to track WER regression.
-7. **Frontend UI** – a simple web interface for testing (the existing `voice_chat.html` can be updated).
-8. **Security hardening** – use JWT or OAuth2 instead of a simple API key, and implement rate limiting.
-9. **Logging & monitoring** – structured logs, metrics, and alerts.
-10. **Docker optimisation** – reduce image size and improve startup time.
-
----
-## License
-
-This project is open‑source under the [MIT License](https://choosealicense.com/licenses/mit/).
-
----
+Results and reproducibility metadata are saved to `benchmark_audio/results.csv`.

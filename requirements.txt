@@ -16,3 +16,7 @@ ollama
 # Async & utilities
 httpx
 python-dotenv
+
+# Testing
+pytest
+pytest-asyncio

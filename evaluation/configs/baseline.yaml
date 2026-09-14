@@ -1,0 +1,29 @@
+# Baseline experiment configuration
+# Run with: python -m evaluation.run_eval --runner routing --skip-llm --seed 42
+
+experiment_name: baseline_no_obfuscation
+description: >
+  Baseline routing evaluation using the production _is_data_query() heuristic.
+  No audio processing. No LLM calls. Ground-truth text input only.
+  Used to measure the inherent accuracy of the routing logic independent of STT.
+
+dataset: evaluation/datasets/voice_eval_v1.jsonl
+dataset_version: v1
+seed: 42
+runner: routing
+skip_llm: true
+
+obfuscation:
+  method: none
+  strength: none
+
+model:
+  stt: whisper-base  # only used in transcription/obfuscation/e2e runners
+  llm: llama3.2     # only used in correction/e2e runners
+
+notes: >
+  The baseline measures what the system can achieve WITHOUT any STT error,
+  obfuscation distortion, or correction interference.
+  It isolates routing/tool quality from audio pipeline quality.
+  Any degradation observed in the obfuscation or e2e runners relative to
+  this baseline is attributable to the audio processing pipeline.
