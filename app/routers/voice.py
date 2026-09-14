@@ -1,9 +1,12 @@
+import asyncio
 import shutil
 import tempfile
 from pathlib import Path
+
 import librosa
 import soundfile as sf
-from fastapi import APIRouter, UploadFile, File, Header, HTTPException, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Header, HTTPException
+
 from app.config import settings
 from app.models.voice import QueryResponse
 from app.services.llm_orchestrator import LLMOrchestrator
@@ -14,7 +17,14 @@ from app.voice.tts import TTSEngine
 
 router = APIRouter()
 
-ALLOWED_CONTENT_TYPES = {"audio/wav", "audio/mpeg", "audio/webm", "audio/ogg"}
+ALLOWED_CONTENT_TYPES = {
+    "audio/wav",
+    "audio/x-wav",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/webm",
+    "audio/ogg",
+}
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25MB
 AUDIO_DIR = Path("temp_audio")
 AUDIO_DIR.mkdir(exist_ok=True)
@@ -24,32 +34,71 @@ AUDIO_DIR.mkdir(exist_ok=True)
 # rather than a strength label.
 STRENGTH_TO_SEMITONES = {"mild": 2.0, "medium": 4.0, "strong": 6.0}
 
-# # Singletons
-# obfuscator = FormantPreservingObfuscator(
-#     semitone_shift=STRENGTH_TO_SEMITONES.get(settings.OBFUSCATION_STRENGTH, 4.0),
-#     jitter=0.5 if settings.OBFUSCATION_STRENGTH == "mild" else 1.5,
-# )
-
-jitter_value = 0.5 if settings.OBFUSCATION_STRENGTH == "mild" else 1.5
+# Singletons
 obfuscator = FormantPreservingObfuscator(
-    semitone_shift=STRENGTH_TO_SEMITONES.get(settings.OBFUSCATION_STRENGTH, 4.0),
-    jitter=jitter_value,
+    semitone_shift=STRENGTH_TO_SEMITONES.get(settings.OBFUSCATION_STRENGTH, 2.0),
+    # Default jitter (±1.5) can push "mild" up to ~3.5 semitones -- into
+    # "medium" territory -- which is why WER at "mild" was as bad as
+    # "medium" in benchmarking. Tighten jitter for "mild" specifically so
+    # the effective shift stays close to its intended 2.0 semitones.
+    jitter=0.5 if settings.OBFUSCATION_STRENGTH == "mild" else 1.0,
 )
-
 stt = STTEngine(model_name=settings.STT_MODEL)
 tts = TTSEngine(voice=settings.EDGE_TTS_VOICE)
 orchestrator = LLMOrchestrator(model=settings.OLLAMA_MODEL)
 
 
+async def _synthesize_and_verify(text: str, output_path: Path) -> None:
+    """
+    Runs TTS, then confirms the output file actually exists on disk with
+    real content before we ever hand back a /static/ URL pointing at it.
+
+    On Windows in particular, a file that was just written can briefly be
+    unreadable (e.g. antivirus real-time scanning locking new files for a
+    moment), and the browser's <audio> tag fires its GET essentially the
+    instant the JSON response is parsed -- faster than that lock might
+    clear. Rather than silently returning a URL that 404s a moment later,
+    poll briefly for the file to become a real, non-empty file, and raise
+    a clear error if it never does.
+    """
+    await tts.synthesize(text, output_path)
+
+    for _ in range(10):  # up to ~1s total
+        if output_path.exists() and output_path.stat().st_size > 0:
+            return
+        await asyncio.sleep(0.1)
+
+    raise HTTPException(
+        status_code=500,
+        detail=(
+            f"TTS output was not found on disk after synthesis: {output_path}. "
+            "This usually means the write was blocked or delayed (e.g. by "
+            "antivirus real-time scanning) -- check that temp_audio/ isn't "
+            "being scanned/locked on write, and check server logs for any "
+            "edge-tts errors."
+        ),
+    )
+
+
 @router.post("/voice/query", response_model=QueryResponse)
-async def voice_query(audio_file: UploadFile = File(...), api_key: str = Header(...), background_tasks: BackgroundTasks = BackgroundTasks()):
+async def voice_query(audio_file: UploadFile = File(...), api_key: str = Header(...)):
     if not validate_api_key(api_key):
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     if audio_file.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(status_code=400, detail="Only WAV or MP3 allowed")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported audio type: {audio_file.content_type}. Allowed: WAV, MP3, WebM, OGG",
+        )
 
-    suffix_map = {"audio/wav": ".wav", "audio/mpeg": ".mp3", "audio/webm": ".webm", "audio/ogg": ".ogg"}
+    suffix_map = {
+        "audio/wav": ".wav",
+        "audio/x-wav": ".wav",
+        "audio/mpeg": ".mp3",
+        "audio/mp3": ".mp3",
+        "audio/webm": ".webm",
+        "audio/ogg": ".ogg",
+    }
     suffix = suffix_map.get(audio_file.content_type, ".wav")
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=AUDIO_DIR) as tmp:
@@ -58,24 +107,41 @@ async def voice_query(audio_file: UploadFile = File(...), api_key: str = Header(
             raise HTTPException(status_code=400, detail="File too large (max 25MB)")
         input_path = Path(tmp.name)
 
-    y, sr = librosa.load(input_path, sr=16000, mono=True)
+    # Normalize whatever the browser sent (webm/ogg/mp3, stereo, arbitrary
+    # sample rate, occasionally malformed headers) to a clean 16kHz mono
+    # WAV before obfuscation. FormantPreservingObfuscator reads audio with
+    # soundfile, which doesn't reliably handle every input container/codec
+    # combination -- librosa.load goes through a decode path that does, so
+    # doing that conversion up front means the obfuscator only ever sees a
+    # known-good format.
+    try:
+        y, sr = librosa.load(input_path, sr=16000, mono=True)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Could not decode the uploaded audio file. Ensure it is a valid "
+                f"WAV, MP3, WebM, or OGG recording. Underlying error: {exc}"
+            ),
+        )
     normalized_path = input_path.with_suffix(".input.wav")
     sf.write(normalized_path, y, sr)
 
     obf_path = input_path.with_suffix(".obf.wav")
     obfuscator.obfuscate(normalized_path, obf_path)
-    # After building the response, but before returning:
-    background_tasks.add_task(lambda: obf_path.unlink(missing_ok=True))
-    background_tasks.add_task(lambda: answer_path.unlink(missing_ok=True))
-    # Also delete the original uploaded file (input_path) if it's not needed:
-    background_tasks.add_task(lambda: input_path.unlink(missing_ok=True))
 
     user_text, stt_confidence = stt.transcribe_with_confidence(obf_path)
 
+    # If Whisper itself flags this segment as unreliable (likely
+    # hallucinated / no real speech detected), don't hand it to the
+    # correction step or the orchestrator -- correction can fix a garbled
+    # word, but it can't recover a transcript that was fabricated from
+    # noise, and running it through anyway just produces a confidently
+    # wrong answer with no visible sign anything went wrong.
     if stt_confidence["low_confidence"]:
         answer_text = "Sorry, I didn't catch that clearly. Could you try again?"
         answer_path = input_path.with_suffix(".answer.mp3")
-        await tts.synthesize(answer_text, answer_path)
+        await _synthesize_and_verify(answer_text, answer_path)
 
         return QueryResponse(
             obfuscated_audio_url=f"/static/{obf_path.name}",
@@ -96,7 +162,7 @@ async def voice_query(audio_file: UploadFile = File(...), api_key: str = Header(
     answer_text = orchestrator_result["answer"]
 
     answer_path = input_path.with_suffix(".answer.mp3")
-    await tts.synthesize(answer_text, answer_path)
+    await _synthesize_and_verify(answer_text, answer_path)
 
     metadata = orchestrator_result["metadata"]
     metadata["low_confidence_transcription"] = False

@@ -25,7 +25,7 @@ def get_data(source: str, limit: int = Query(10)):
             metadata=Metadata(total_results=0, returned_results=0, data_freshness="unknown"),
         )
 
-    raw_data = connector.fetch()
+    raw_data = connector.fetch(limit=limit)
     optimized = summarize_if_large(apply_voice_limits(raw_data))
 
     metadata = Metadata(

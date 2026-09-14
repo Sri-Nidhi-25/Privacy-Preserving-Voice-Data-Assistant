@@ -100,13 +100,26 @@ class FormantPreservingObfuscator:
         self.jitter = jitter
 
     def obfuscate(self, input_path: Path, output_path: Path) -> None:
-        x, fs = sf.read(str(input_path))
-        if x.ndim > 1:
-            x = x.mean(axis=1)  # downmix to mono if needed
+        # Load audio robustly: librosa.load decodes non-WAV/MP3 with metadata
+        # safely and standardizes sample rate to 16kHz mono.
+        try:
+            x, fs = librosa.load(str(input_path), sr=16000, mono=True)
+        except Exception:
+            x, fs = sf.read(str(input_path))
+            if x.ndim > 1:
+                x = x.mean(axis=1)  # downmix to mono if needed
+            if fs != 16000:
+                x = librosa.resample(x, orig_sr=fs, target_sr=16000)
+                fs = 16000
+
         x = np.ascontiguousarray(x, dtype=np.float64)
 
         # --- Analysis: decompose into pitch / spectral envelope / aperiodicity ---
-        f0, t = getattr(pw, "dio")(x, fs)
+        # Prefer harvest over dio: harvest eliminates octave jumps and harsh buzzes.
+        if hasattr(pw, "harvest"):
+            f0, t = getattr(pw, "harvest")(x, fs)
+        else:
+            f0, t = getattr(pw, "dio")(x, fs)
         f0 = getattr(pw, "stonemask")(x, f0, t, fs)
         sp = getattr(pw, "cheaptrick")(x, f0, t, fs)
         ap = getattr(pw, "d4c")(x, f0, t, fs)     # aperiodicity -- untouched
@@ -122,4 +135,10 @@ class FormantPreservingObfuscator:
 
         # --- Resynthesis with original formant structure ---
         y = getattr(pw, "synthesize")(f0_shifted, sp, ap, fs)
+
+        # Peak normalization to avoid digital clipping and crackling
+        max_val = np.max(np.abs(y)) if len(y) > 0 else 0
+        if max_val > 0.99:
+            y = y * (0.95 / max_val)
+
         sf.write(str(output_path), y, fs)

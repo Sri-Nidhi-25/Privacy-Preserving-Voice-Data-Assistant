@@ -33,6 +33,10 @@ class STTEngine:
             # on noisy/distorted audio. A single float disables that retry
             # loop and locks in whatever the first greedy decode produces.
             temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
+            initial_prompt=(
+                "Customer, CRM, support tickets, priority, open, closed, "
+                "daily active users, analytics, metrics, count, average, users."
+            ),
         )
 
         segments = result.get("segments", [])

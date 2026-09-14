@@ -126,7 +126,7 @@
 
   <div class="config">
     <label for="apiUrl">API URL</label>
-    <input id="apiUrl" value="http://127.0.0.1:8000/voice/query" />
+    <input id="apiUrl" value="/voice/query" />
 
     <label for="apiKey">API Key</label>
     <input id="apiKey" value="secret-key-change-me" />
@@ -146,8 +146,19 @@ const statusEl = document.getElementById('status');
 const logEl = document.getElementById('log');
 
 let mediaRecorder, chunks = [], stream;
+// Tracks whether the button was released while we were still waiting on
+// the getUserMedia() permission prompt. Without this, a mouseup/touchend
+// that arrives before the recorder actually exists is silently dropped by
+// stopRecording()'s `mediaRecorder && ...` guard -- then when permission
+// finally resolves, the recorder starts anyway with no matching stop event
+// left to end it, so it just records forever with no visible way to stop.
+let stopRequested = false;
 
 async function startRecording() {
+  stopRequested = false;
+  statusEl.textContent = 'Requesting microphone permission...';
+  statusEl.classList.remove('error');
+
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch (err) {
@@ -155,6 +166,15 @@ async function startRecording() {
     statusEl.classList.add('error');
     return;
   }
+
+  // The button was already released before permission resolved -- release
+  // the mic immediately instead of starting a recording nothing will stop.
+  if (stopRequested) {
+    stream.getTracks().forEach(t => t.stop());
+    statusEl.textContent = 'Hold the button to record';
+    return;
+  }
+
   chunks = [];
   mediaRecorder = new MediaRecorder(stream);
   mediaRecorder.ondataavailable = e => chunks.push(e.data);
@@ -166,6 +186,7 @@ async function startRecording() {
 }
 
 function stopRecording() {
+  stopRequested = true;
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
     mediaRecorder.stop();
     stream.getTracks().forEach(t => t.stop());

@@ -286,7 +286,7 @@ def _extract_json_from_text(text: str) -> List[Dict[str, Any]]:
 
 class LLMOrchestrator:
     def __init__(self, model: Optional[str] = None):
-        self.model = model or settings.OLLAMA_MODEL
+        self.model = (model or settings.OLLAMA_MODEL).strip()
         self.connector_map = {
             "get_crm_data": CRMConnector(),
             "get_support_tickets": SupportConnector(),
@@ -405,19 +405,6 @@ class LLMOrchestrator:
             "answer": content if content else "I didn't understand that query.",
             "metadata": metadata
         }
-
-    # @staticmethod
-    # def _format_answer(data, func_name) -> str:
-    #     if not data:
-    #         return "No data found."
-    #     if func_name == "get_crm_data":
-    #         return f"Found {len(data)} customers."
-    #     if func_name == "get_support_tickets":
-    #         return f"Found {len(data)} support tickets."
-    #     if func_name == "get_analytics" and "value" in data[0]:
-    #         avg = sum(d["value"] for d in data) / len(data)
-    #         return f"Average value over the period is {avg:.0f}."
-    #     return str(data)[:200]
 
     @staticmethod
     def _format_answer(data, func_name) -> str:
