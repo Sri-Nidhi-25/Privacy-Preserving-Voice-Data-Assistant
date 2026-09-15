@@ -1,4 +1,4 @@
-﻿"""
+"""
 app/config.py - Application configuration with startup validation.
 
 All settings come from environment variables / .env file.
@@ -46,6 +46,9 @@ class Settings(BaseSettings):
 
     # Privacy: set True to include transcripts in structured logs (dev only)
     LOG_TRANSCRIPTS: bool = False
+
+    # Reliability: Maximum bounded retries for transient failures
+    MAX_RETRIES: int = 2
 
     @model_validator(mode="after")
     def _validate_and_sanitize(self) -> "Settings":

@@ -64,8 +64,13 @@ def _word_overlap_ratio(a: str, b: str) -> float:
     return len(a_words & b_words) / len(a_words)
 
 
+from app.services.correction_guard import apply_correction_gate, CorrectionDecision
+
+
 def correct_transcript(raw_transcript: str, model: str, client: Optional[Any] = None) -> dict:
     """
+    Applies LLM transcript correction followed by deterministic reliability gate.
+
     Returns dict:
       text: str
       correction_attempted: bool
@@ -73,6 +78,8 @@ def correct_transcript(raw_transcript: str, model: str, client: Optional[Any] = 
       correction_accepted: bool
       correction_rejected: bool
       fallback_used: bool
+      decision: str
+      rejection_reason: Optional[str]
     """
     text = raw_transcript.strip()
     res = {
@@ -82,6 +89,8 @@ def correct_transcript(raw_transcript: str, model: str, client: Optional[Any] = 
         "correction_accepted": False,
         "correction_rejected": False,
         "fallback_used": False,
+        "decision": CorrectionDecision.KEEP_RAW.value,
+        "rejection_reason": None,
     }
     if not text:
         return res
@@ -98,30 +107,25 @@ def correct_transcript(raw_transcript: str, model: str, client: Optional[Any] = 
             ],
         )
         corrected = response["message"]["content"].strip()
-    except Exception:
-        # If the correction call itself fails (model down, timeout, etc.),
-        # don't let that take down the whole query -- just skip correction.
+    except Exception as exc:
         res["fallback_used"] = True
+        res["rejection_reason"] = f"correction_call_failed: {exc}"
         return res
 
-    # Guardrails: reject corrections that look like the model went off-script
-    if not corrected or len(corrected) > len(text) * 2 or len(corrected) < len(text) * 0.4:
-        res["correction_rejected"] = True
-        res["fallback_used"] = True
-        return res
-    if _looks_like_refusal_or_commentary(corrected):
-        res["correction_rejected"] = True
-        res["fallback_used"] = True
-        return res
-    if _word_overlap_ratio(text, corrected) < 0.5:
-        res["correction_rejected"] = True
-        res["fallback_used"] = True
-        return res
+    # Apply the Phase 3 deterministic reliability gate
+    decision, final_text, reason = apply_correction_gate(text, corrected)
+    res["decision"] = decision.value
+    res["rejection_reason"] = reason
 
-    changed = corrected.lower() != text.lower()
-    res["text"] = corrected
-    res["correction_changed"] = changed
-    res["correction_accepted"] = True
+    if decision == CorrectionDecision.ACCEPT_CORRECTION:
+        res["text"] = final_text
+        res["correction_changed"] = (final_text.lower() != text.lower())
+        res["correction_accepted"] = True
+    else:
+        res["text"] = raw_transcript
+        res["correction_rejected"] = True
+        res["fallback_used"] = True
+
     return res
 
 
@@ -199,7 +203,10 @@ SCHEMA = {
     },
 }
 
-# Keywords that indicate a data query
+# Entity-grounded intent routing
+from app.services.intent_router import is_data_query, classify_intent, Intent
+
+# Preserved for backward compatibility
 DATA_KEYWORDS = [
     "customer", "ticket", "support", "analytics", "active", "inactive",
     "open", "closed", "priority", "daily", "users", "metric", "average",
@@ -207,8 +214,7 @@ DATA_KEYWORDS = [
 ]
 
 def _is_data_query(text: str) -> bool:
-    text_lower = text.lower()
-    return any(kw in text_lower for kw in DATA_KEYWORDS)
+    return is_data_query(text)
 
 def _validate_args(func_name: str, args: dict) -> tuple[bool, str]:
     schema = SCHEMA.get(func_name)
@@ -258,6 +264,8 @@ def _empty_metadata() -> dict:
         "data_sources_used": [],
         "result_count": 0,
         "freshness": "unknown",
+        "freshness_status": "unknown",
+        "freshness_warning": None,
         "retrieved_at": datetime.now(timezone.utc).isoformat(),
         "source_last_updated": "unknown",
         "tool_calls": [],
@@ -266,14 +274,18 @@ def _empty_metadata() -> dict:
         "correction_accepted": False,
         "correction_rejected": False,
         "fallback_used": False,
+        "retry_attempted": False,
+        "retry_count": 0,
+        "retry_succeeded": False,
+        "retry_reason": None,
     }
+
 
 def _extract_json_from_text(text: str) -> List[Dict[str, Any]]:
     """
     Extract one or more JSON tool-call objects from the text.
     Returns a list of dicts, each with keys "name" and "arguments".
     """
-    # Helper: find a balanced JSON object starting at a given position
     def extract_object(s: str, start: int) -> Optional[str]:
         brace_count = 0
         in_string = False
@@ -316,6 +328,7 @@ def _extract_json_from_text(text: str) -> List[Dict[str, Any]]:
 
     return results
 
+
 class LLMOrchestrator:
     def __init__(self, model: Optional[str] = None):
         self.model = (model or settings.OLLAMA_MODEL).strip()
@@ -326,16 +339,43 @@ class LLMOrchestrator:
             "get_analytics": AnalyticsConnector(),
         }
 
-    def _execute_tool_calls(self, tool_calls: List[Dict]) -> tuple[str, dict]:
+    def _execute_tool_calls(
+        self,
+        tool_calls: List[Dict],
+        detected_intent: Optional[Intent] = None,
+    ) -> tuple[str, dict]:
         """Process a list of tool calls and return (answer_text, metadata)."""
+        INTENT_TOOL_MAP = {
+            Intent.CRM_QUERY: ["get_crm_data"],
+            Intent.SUPPORT_QUERY: ["get_support_tickets"],
+            Intent.ANALYTICS_QUERY: ["get_analytics"],
+        }
+
         answers = []
         sources_used = []
         total_results = 0
         call_log = []
         source_timestamps = []
+        latest_freshness_status = "unknown"
+        freshness_warnings = []
+        overall_retry_attempted = False
+        overall_retry_count = 0
+        overall_retry_succeeded = False
 
         for call in tool_calls:
             func_name = call["function"]["name"]
+
+            # Intent vs Tool alignment check (Section 17)
+            if detected_intent in INTENT_TOOL_MAP:
+                allowed_tools = INTENT_TOOL_MAP[detected_intent]
+                if func_name not in allowed_tools:
+                    err_meta = _empty_metadata()
+                    err_meta.update({
+                        "tool_selection_error": f"Tool '{func_name}' is incompatible with detected intent '{detected_intent.value}'",
+                        "failure_type": "tool_selection_mismatch",
+                    })
+                    return f"Sorry, tool {func_name} is incompatible with your request.", err_meta
+
             args = _coerce_args(func_name, call["function"]["arguments"])
 
             valid, error_msg = _validate_args(func_name, args)
@@ -344,6 +384,7 @@ class LLMOrchestrator:
                 err_meta.update({
                     "validation_error": error_msg,
                     "invalid_args": args,
+                    "failure_type": "invalid_tool_arguments",
                 })
                 return f"Sorry, I couldn't interpret that filter: {error_msg}", err_meta
 
@@ -351,27 +392,56 @@ class LLMOrchestrator:
             if not connector:
                 continue
 
+            # Bounded retry policy for transient connector failures (Sections 19, 20)
+            retry_count = 0
+            max_retries = getattr(settings, "MAX_RETRIES", 2)
             conn_result = connector.fetch_result(**args)
+
+            while not conn_result.success and retry_count < max_retries:
+                err_str = str(conn_result.error or "").lower()
+                is_transient = any(w in err_str for w in ["timeout", "temporary", "connection", "locked", "busy"])
+                if not is_transient:
+                    break
+                retry_count += 1
+                conn_result = connector.fetch_result(**args)
+
+            if retry_count > 0:
+                overall_retry_attempted = True
+                overall_retry_count += retry_count
+                if conn_result.success:
+                    overall_retry_succeeded = True
+
+            # Zero-fabrication guarantee (Section 31): failed connector never fabricates empty data
             if not conn_result.success:
                 err_meta = _empty_metadata()
                 err_meta.update({
                     "connector_error": conn_result.error,
                     "tool_calls": call_log,
+                    "retry_attempted": overall_retry_attempted,
+                    "retry_count": overall_retry_count,
+                    "retry_succeeded": overall_retry_succeeded,
+                    "failure_type": "connector_failed",
                 })
                 return f"Sorry, could not retrieve data from {func_name}: {conn_result.error}", err_meta
 
             raw_data = conn_result.data
             if conn_result.source_last_updated:
                 source_timestamps.append(conn_result.source_last_updated)
+            if conn_result.freshness_status != "unknown":
+                latest_freshness_status = conn_result.freshness_status
+            if conn_result.freshness_warning:
+                freshness_warnings.append(conn_result.freshness_warning)
 
             optimized = apply_voice_limits(summarize_if_large(raw_data))
-            answers.append(self._format_answer(optimized, func_name))
+            ans = self._format_answer(optimized, func_name)
+            answers.append(ans)
             sources_used.append(SOURCE_LABELS.get(func_name, func_name))
             total_results += len(raw_data)
             call_log.append({
                 "source": SOURCE_LABELS.get(func_name, func_name),
                 "args": args,
                 "result_count": len(raw_data),
+                "freshness_status": conn_result.freshness_status,
             })
 
         if not answers:
@@ -385,7 +455,12 @@ class LLMOrchestrator:
             "retrieved_at": now_iso,
             "source_last_updated": source_last_updated,
             "freshness": f"Source last updated: {source_last_updated}" if source_last_updated != "unknown" else "unknown",
+            "freshness_status": latest_freshness_status,
+            "freshness_warning": "; ".join(freshness_warnings) if freshness_warnings else None,
             "tool_calls": call_log,
+            "retry_attempted": overall_retry_attempted,
+            "retry_count": overall_retry_count,
+            "retry_succeeded": overall_retry_succeeded,
         }
         return " ".join(answers), metadata
 
@@ -404,10 +479,17 @@ class LLMOrchestrator:
             meta["correction_rejected"] = corr["correction_rejected"]
             meta["fallback_used"] = corr["fallback_used"]
             meta["transcript_was_corrected"] = corr["correction_changed"]
+            if "decision" in corr:
+                meta["correction_decision"] = corr["decision"]
+            if corr.get("rejection_reason"):
+                meta["correction_rejection_reason"] = corr["rejection_reason"]
             return meta
 
         try:
-            if not _is_data_query(corrected_text):
+            intent_res = classify_intent(corrected_text)
+            detected_intent = intent_res.intent
+
+            if intent_res.route != "tool":
                 response = self.client.chat(
                     model=self.model,
                     messages=[
@@ -416,6 +498,7 @@ class LLMOrchestrator:
                     ],
                 )
                 metadata = _apply_corr_meta(_empty_metadata())
+                metadata["classified_intent"] = detected_intent.value
                 return {
                     "answer": response["message"]["content"],
                     "metadata": metadata
@@ -433,7 +516,8 @@ class LLMOrchestrator:
             tool_calls = message.get("tool_calls")
 
             if tool_calls:
-                answer, metadata = self._execute_tool_calls(tool_calls)
+                answer, metadata = self._execute_tool_calls(tool_calls, detected_intent=detected_intent)
+                metadata["classified_intent"] = detected_intent.value
                 return {"answer": answer, "metadata": _apply_corr_meta(metadata)}
 
             content = message.get("content", "")
@@ -443,10 +527,12 @@ class LLMOrchestrator:
                     {"function": {"name": c["name"], "arguments": c["arguments"]}}
                     for c in extracted_calls
                 ]
-                answer, metadata = self._execute_tool_calls(synthetic_calls)
+                answer, metadata = self._execute_tool_calls(synthetic_calls, detected_intent=detected_intent)
+                metadata["classified_intent"] = detected_intent.value
                 return {"answer": answer, "metadata": _apply_corr_meta(metadata)}
 
             metadata = _apply_corr_meta(_empty_metadata())
+            metadata["classified_intent"] = detected_intent.value
             return {
                 "answer": content if content else "I didn't understand that query.",
                 "metadata": metadata
