@@ -40,14 +40,11 @@ ADVERSARIAL_DIRECT_PATTERNS = [
     re.compile(r"\bpeople\s+were\s+at\s+the\b", re.IGNORECASE),
     re.compile(r"\b(capital\s+of|tell\s+me\s+a\s+joke|weather\s+like|what\s+time\s+is\s+it)\b", re.IGNORECASE),
     # Explanatory and definitional queries about domains (informational, not data requests)
-    re.compile(r"^(what\s+is|what's|explain|describe|tell\s+me\s+about|what\s+does)\s+(the\s+meaning\s+of\s+)?(crm|analytics|support\s+tickets?|active\s+status|engagement)\b", re.IGNORECASE),
-    re.compile(r"\b(explain\s+what|stands\s+for|what\s+does\s+.*\s+mean|difference\s+between)\b", re.IGNORECASE),
+    re.compile(r"^(what\s+is|what's|explain|describe|tell\s+me\s+about|what\s+does)\s+(the\s+meaning\s+of\s+)?(crm|analytics|support|tickets?|active\s+status|engagement)\b", re.IGNORECASE),
+    re.compile(r"\b(stands\s+for|what\s+does\s+.*\s+mean|difference\s+between|definition\s+of)\b", re.IGNORECASE),
     re.compile(r"\b(how\s+is\s+.*\s+calculated|what\s+exactly\s+is)\b", re.IGNORECASE),
-    # Team sentiment, narrative descriptions, or past-tense remarks
-    re.compile(r"\b(crushed|crushing\s+it|doing\s+great|resolved\s+all\s+tickets|flying\s+in)\b", re.IGNORECASE),
-    re.compile(r"\b(analysts?|sales\s+team|support\s+team)\b.*\b(reviewing|crushed|doing|targets?|internally)\b", re.IGNORECASE),
-    re.compile(r"\b(launch|outage|product)\b.*\b(incredible|awesome|flying|great)\b", re.IGNORECASE),
-    re.compile(r"\breally\s+engaged\s+with\b", re.IGNORECASE),
+    # General non-retrieval conversational sentiment & team narratives
+    re.compile(r"\b(our\s+team|analysts?|sales\s+team|support\s+team)\b.*\b(doing|internally|reviewing|celebrat|praise)\b", re.IGNORECASE),
 ]
 
 # Domain entity regexes

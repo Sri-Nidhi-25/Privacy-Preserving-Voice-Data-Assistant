@@ -1,0 +1,67 @@
+{
+  "protocol_version": "1.0.0",
+  "status": "FROZEN",
+  "freeze_date": "2026-09-28T12:00:00Z",
+  "datasets": {
+    "dev": {
+      "path": "evaluation/datasets/dev/dev_v1.jsonl",
+      "sha256": "1f881eed2fd710edca69755be15aee450f06b2b3798b12a76fd5f39b5ac3d4cb",
+      "cases_count": 30,
+      "purpose": "Iterative development, rule exploration, debugging",
+      "frozen": false,
+      "category_distribution": {
+        "data_query": 13,
+        "non_data_query": 5,
+        "adversarial": 5,
+        "ambiguous": 2,
+        "stt_sensitive": 3,
+        "boundary": 2
+      }
+    },
+    "validation": {
+      "path": "evaluation/datasets/validation/validation_v1.jsonl",
+      "sha256": "4844b091a30c09457ad45824e6a5ea9dfd4f4843dab7a1e816e099dc84aaa349",
+      "cases_count": 12,
+      "purpose": "Threshold calibration, hyperparameter sweep, model selection",
+      "frozen": true,
+      "category_distribution": {
+        "data_query": 6,
+        "non_data_query": 2,
+        "adversarial": 2,
+        "boundary": 1,
+        "ambiguous": 1
+      }
+    },
+    "held_out_test": {
+      "path": "evaluation/datasets/held_out_test/held_out_test_v1.jsonl",
+      "sha256": "82efa536759a51819176d576aa168ad12c03be7ac0db3487985457791c9924f7",
+      "cases_count": 30,
+      "purpose": "Final reported generalization benchmark; strictly unobserved during development",
+      "frozen": true,
+      "category_distribution": {
+        "crm": 5,
+        "support": 5,
+        "analytics": 5,
+        "general_direct": 5,
+        "adversarial": 5,
+        "boundary": 2,
+        "ambiguous": 3
+      }
+    },
+    "challenge": {
+      "path": "evaluation/datasets/challenge/challenge_v1.jsonl",
+      "sha256": "0ded94acbe7bd6e3c050990b3073d989e3ab0b30678c92a2b4b59dd727e0ab66",
+      "cases_count": 25,
+      "purpose": "Adversarial distribution shift, edge-case stress testing, correction traps",
+      "frozen": true,
+      "category_distribution": {
+        "stt_misleading": 5,
+        "subtle_adversarial": 5,
+        "contradictory_args": 3,
+        "boundary_args": 6,
+        "correction_traps": 3,
+        "near_duplicate_paraphrases": 3
+      }
+    }
+  }
+}

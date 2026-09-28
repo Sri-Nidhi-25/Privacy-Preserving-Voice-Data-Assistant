@@ -1,0 +1,68 @@
+{
+  "run_id": "692ac1bc",
+  "timestamp": "2026-09-28T09:07:45.533078+00:00",
+  "dataset": "held_out_test_v1.jsonl",
+  "sample_size": 30,
+  "results": {
+    "full_system": {
+      "description": "All Phase 3/4 reliability mechanisms enabled",
+      "routing_accuracy": 0.8667,
+      "adversarial_fpr": 0.6,
+      "tool_recall": 0.95,
+      "correction_safety_rate": 1.0,
+      "tool_alignment_accuracy": 1.0,
+      "misaligned_execution_rate": 0.0,
+      "transient_fault_recovered": true
+    },
+    "ablate_intent_router": {
+      "description": "Revert router to Phase 1 18-keyword matching",
+      "routing_accuracy": 0.8,
+      "adversarial_fpr": 1.0,
+      "tool_recall": 0.95,
+      "correction_safety_rate": 1.0,
+      "tool_alignment_accuracy": 1.0,
+      "misaligned_execution_rate": 0.0,
+      "transient_fault_recovered": true
+    },
+    "ablate_correction_guard": {
+      "description": "Bypass transcript correction validation guard",
+      "routing_accuracy": 0.8667,
+      "adversarial_fpr": 0.6,
+      "tool_recall": 0.95,
+      "correction_safety_rate": 0.3333,
+      "tool_alignment_accuracy": 1.0,
+      "misaligned_execution_rate": 0.0,
+      "transient_fault_recovered": true
+    },
+    "ablate_tool_alignment": {
+      "description": "Disable intent-tool domain alignment gate",
+      "routing_accuracy": 0.8667,
+      "adversarial_fpr": 0.6,
+      "tool_recall": 0.95,
+      "correction_safety_rate": 1.0,
+      "tool_alignment_accuracy": 0.6,
+      "misaligned_execution_rate": 0.4,
+      "transient_fault_recovered": true
+    },
+    "ablate_retry_policy": {
+      "description": "Disable bounded exponential backoff retries",
+      "routing_accuracy": 0.8667,
+      "adversarial_fpr": 0.6,
+      "tool_recall": 0.95,
+      "correction_safety_rate": 1.0,
+      "tool_alignment_accuracy": 1.0,
+      "misaligned_execution_rate": 0.0,
+      "transient_fault_recovered": false
+    },
+    "unmitigated_baseline": {
+      "description": "Pure Phase 1 legacy baseline (no interventions)",
+      "routing_accuracy": 0.8,
+      "adversarial_fpr": 1.0,
+      "tool_recall": 0.95,
+      "correction_safety_rate": 0.3333,
+      "tool_alignment_accuracy": 0.6,
+      "misaligned_execution_rate": 0.4,
+      "transient_fault_recovered": false
+    }
+  }
+}

@@ -175,34 +175,40 @@ pytest tests/ -v
 
 ---
 
-## 7. Phase 4 — Research-Grade Evaluation & Experiment Reproduction
+## 7. Phase 4.6 — Experimental Integrity, Dual-Level Evaluation & Reproduction
 
-Phase 4 establishes research-grade evaluation, out-of-distribution robustness, and empirical privacy-utility analysis without synthetic or fabricated metrics:
+Phase 4.6 establishes strict experimental integrity, independent dataset freezing, dual-level evaluation, and honest, evidence-backed reporting:
 
 ### A. Master Experiment Suite (Single Command)
-Run all Phase 4 experiments (held-out generalization, challenge stress, systematic ablation, acoustic privacy profiling, and audio perturbation matrix) with a single reproducible command:
+Run the complete Phase 4.6 evaluation suite (dataset verification, Level A text component routing, Level B real voice pipeline execution, reconstructed ablation study, real acoustic robustness on Whisper, and physical acoustic obfuscation analysis) with a single deterministic command:
 
 ```bash
-python -m evaluation.run_final_experiment --output-dir experiments/results --seed 42
+python -m evaluation.run_final_experiment --seed 42 --output-dir experiments/results
 ```
 
 Outputs are automatically serialized to:
 - `experiments/results/master_experiment_manifest_latest.json` (provenance, git commit, seed, metric matrices)
+- `experiments/results/metrics.json` (structured high-level metrics)
+- `experiments/results/failures.json` (traceable failure logs with failure codes)
+- `experiments/results/component_results.jsonl` (Level A raw per-example records)
+- `experiments/results/pipeline_results.jsonl` (Level B raw speech pipeline records)
 - `experiments/results/dashboard.html` (interactive, self-contained visual results dashboard)
 
-### B. Individual Evaluation Modules
-- **Held-Out Generalization Set:** `evaluation/datasets/held_out_test/held_out_test_v1.jsonl` (30 unseen cases evaluating syntactic and lexical generalization)
-- **Adversarial Challenge Set:** `evaluation/datasets/challenge/challenge_v1.jsonl` (25 cases covering STT-misleading queries, subtle sentiment, contradictory filters, and boundary conditions)
-- **Metamorphic Invariant Testing:** `tests/test_phase4/test_metamorphic.py` (16 invariant tests across paraphrase groups and correction traps)
-- **Evaluation Pipeline Integrity:** `tests/test_phase4/test_evaluation_pipeline_integrity.py` (12 self-validation tests defending against division-by-zero, corrupted schemas, and metric boundary errors)
-- **Systematic Ablation Study:** `python -m evaluation.runners.ablation_runner` (quantifies the empirical impact of disabling the intent router, correction guard, tool-alignment check, and bounded retries)
-- **Empirical Acoustic Privacy Profile:** `python -m evaluation.runners.privacy_acoustic_runner` (extracts objective physical fundamental frequency shifts $\Delta F_0$ via YIN algorithm rather than arbitrary 'privacy scores')
-- **Environmental Audio Robustness Matrix:** `python -m evaluation.runners.robustness_runner` (evaluates acoustic feature drift under additive Gaussian noise 10dB–$\infty$, playback tempo 0.85x–1.15x, and volume scaling -6dB–+6dB)
+### B. Evaluation Architecture & Dataset Tiers
+- **Dataset Tiers:** Partitioned into `dev/`, `validation/`, `held_out_test/`, and `challenge/`, cryptographically locked by SHA256 checksums in `evaluation/datasets/manifest.json`.
+- **Level A (Component Evaluation):** Measures text routing generalization on frozen held-out (86.7% accuracy) and challenge suites (68.0% accuracy).
+- **Level B (Voice Pipeline Evaluation):** Measures actual end-to-end task completion (100% on benchmark speech) from audio validation, formant-preserving obfuscation, Whisper STT, correction guard, to connector execution.
+- **Oracle-Free Metamorphic Invariants:** `tests/test_phase4/test_metamorphic.py` (78 invariant relation tests evaluating politeness, fillers, casing, and formatting transformations without hardcoded expected labels).
+- **Reconstructed Architectural Ablation:** `python -m evaluation.runners.ablation_runner` (quantifies the isolated impact of disabling the intent router, correction guard, tool-alignment gate, or retry policy against the Phase 1 18-keyword baseline).
+- **Real Acoustic Robustness Matrix:** `python -m evaluation.runners.robustness_runner` (evaluates physical speech audio under additive Gaussian noise through actual Whisper STT).
+- **Acoustic Obfuscation Analysis:** `python -m evaluation.runners.privacy_acoustic_runner` (measures physical F0 pitch shifts $\Delta F_0$; explicitly disclaims biometric speaker privacy).
 
-### C. Research Documentation
-- [Phase 4 Initial Audit & RQs](docs/phase4_initial_audit.md)
-- [Privacy Threat Model](docs/privacy_threat_model.md)
-- [Claim Audit & Empirical Verification](docs/claim_audit.md)
+### C. Integrity & Research Documentation
+- [Phase 4.6 Integrity Audit](docs/phase4_6_integrity_audit.md)
+- [Dataset Protocol & Freeze Policy](docs/evaluation_data_protocol.md)
+- [Contamination & Decontamination Analysis](docs/phase4_6_contamination_analysis.md)
+- [Metamorphic Testing Framework](docs/metamorphic_testing.md)
+- [Claim Verification & Classification Audit](docs/phase4_6_claim_audit.md)
 - [Final Research Evaluation Report](docs/final_evaluation_report.md)
-- [Reliability Invariants (16 Invariants)](docs/reliability_invariants.md)
+- [Reproduction Protocol Guide](docs/reproducibility.md)
 

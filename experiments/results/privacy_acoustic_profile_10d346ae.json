@@ -1,0 +1,533 @@
+{
+  "run_id": "10d346ae",
+  "timestamp": "2026-09-28T09:08:15.247998+00:00",
+  "summary": {
+    "naive_mild": {
+      "method": "naive_mild",
+      "samples_analyzed": 6,
+      "average_f0_hz": 211.05,
+      "average_f0_std_hz": 60.75,
+      "average_f0_shift_hz": 9.0
+    },
+    "naive_medium": {
+      "method": "naive_medium",
+      "samples_analyzed": 6,
+      "average_f0_hz": 202.03,
+      "average_f0_std_hz": 59.48,
+      "average_f0_shift_hz": 23.5
+    },
+    "naive_strong": {
+      "method": "naive_strong",
+      "samples_analyzed": 6,
+      "average_f0_hz": 213.82,
+      "average_f0_std_hz": 61.92,
+      "average_f0_shift_hz": 12.73
+    },
+    "formant_mild": {
+      "method": "formant_mild",
+      "samples_analyzed": 6,
+      "average_f0_hz": 227.43,
+      "average_f0_std_hz": 66.68,
+      "average_f0_shift_hz": 16.33
+    },
+    "formant_medium": {
+      "method": "formant_medium",
+      "samples_analyzed": 6,
+      "average_f0_hz": 238.01,
+      "average_f0_std_hz": 67.01,
+      "average_f0_shift_hz": 26.91
+    },
+    "formant_strong": {
+      "method": "formant_strong",
+      "samples_analyzed": 6,
+      "average_f0_hz": 255.85,
+      "average_f0_std_hz": 64.95,
+      "average_f0_shift_hz": 44.74
+    },
+    "baseline": {
+      "method": "baseline",
+      "samples_analyzed": 6,
+      "average_f0_hz": 211.1,
+      "average_f0_std_hz": 63.16,
+      "average_f0_shift_hz": 0.0
+    }
+  },
+  "details": {
+    "naive_mild": [
+      {
+        "file": "phrase_0.wav",
+        "f0_profile": {
+          "f0_mean": 211.32,
+          "f0_std": 52.45,
+          "f0_median": 210.05,
+          "f0_iqr": 55.7,
+          "voiced_ratio": 0.736
+        },
+        "delta_f0_mean": 17.62
+      },
+      {
+        "file": "phrase_1.wav",
+        "f0_profile": {
+          "f0_mean": 217.96,
+          "f0_std": 66.04,
+          "f0_median": 205.53,
+          "f0_iqr": 94.12,
+          "voiced_ratio": 0.723
+        },
+        "delta_f0_mean": 0.2
+      },
+      {
+        "file": "phrase_2.wav",
+        "f0_profile": {
+          "f0_mean": 187.24,
+          "f0_std": 48.91,
+          "f0_median": 182.43,
+          "f0_iqr": 46.34,
+          "voiced_ratio": 0.759
+        },
+        "delta_f0_mean": 9.54
+      },
+      {
+        "file": "phrase_3.wav",
+        "f0_profile": {
+          "f0_mean": 223.96,
+          "f0_std": 61.2,
+          "f0_median": 218.47,
+          "f0_iqr": 43.97,
+          "voiced_ratio": 0.743
+        },
+        "delta_f0_mean": 11.3
+      },
+      {
+        "file": "phrase_4.wav",
+        "f0_profile": {
+          "f0_mean": 207.68,
+          "f0_std": 67.46,
+          "f0_median": 206.68,
+          "f0_iqr": 62.88,
+          "voiced_ratio": 0.757
+        },
+        "delta_f0_mean": 8.05
+      },
+      {
+        "file": "phrase_5.wav",
+        "f0_profile": {
+          "f0_mean": 218.13,
+          "f0_std": 68.44,
+          "f0_median": 198.62,
+          "f0_iqr": 122.32,
+          "voiced_ratio": 0.698
+        },
+        "delta_f0_mean": 7.29
+      }
+    ],
+    "naive_medium": [
+      {
+        "file": "phrase_0.wav",
+        "f0_profile": {
+          "f0_mean": 201.11,
+          "f0_std": 55.43,
+          "f0_median": 191.29,
+          "f0_iqr": 49.19,
+          "voiced_ratio": 0.726
+        },
+        "delta_f0_mean": 27.83
+      },
+      {
+        "file": "phrase_1.wav",
+        "f0_profile": {
+          "f0_mean": 173.02,
+          "f0_std": 57.05,
+          "f0_median": 164.65,
+          "f0_iqr": 76.8,
+          "voiced_ratio": 0.735
+        },
+        "delta_f0_mean": 44.74
+      },
+      {
+        "file": "phrase_2.wav",
+        "f0_profile": {
+          "f0_mean": 197.73,
+          "f0_std": 55.83,
+          "f0_median": 190.48,
+          "f0_iqr": 46.88,
+          "voiced_ratio": 0.81
+        },
+        "delta_f0_mean": 0.95
+      },
+      {
+        "file": "phrase_3.wav",
+        "f0_profile": {
+          "f0_mean": 222.73,
+          "f0_std": 58.04,
+          "f0_median": 217.92,
+          "f0_iqr": 37.4,
+          "voiced_ratio": 0.757
+        },
+        "delta_f0_mean": 10.07
+      },
+      {
+        "file": "phrase_4.wav",
+        "f0_profile": {
+          "f0_mean": 174.51,
+          "f0_std": 55.88,
+          "f0_median": 172.43,
+          "f0_iqr": 55.39,
+          "voiced_ratio": 0.755
+        },
+        "delta_f0_mean": 25.12
+      },
+      {
+        "file": "phrase_5.wav",
+        "f0_profile": {
+          "f0_mean": 243.1,
+          "f0_std": 74.62,
+          "f0_median": 219.15,
+          "f0_iqr": 94.95,
+          "voiced_ratio": 0.58
+        },
+        "delta_f0_mean": 32.26
+      }
+    ],
+    "naive_strong": [
+      {
+        "file": "phrase_0.wav",
+        "f0_profile": {
+          "f0_mean": 257.65,
+          "f0_std": 65.43,
+          "f0_median": 252.61,
+          "f0_iqr": 63.25,
+          "voiced_ratio": 0.745
+        },
+        "delta_f0_mean": 28.71
+      },
+      {
+        "file": "phrase_1.wav",
+        "f0_profile": {
+          "f0_mean": 214.97,
+          "f0_std": 68.42,
+          "f0_median": 210.69,
+          "f0_iqr": 95.95,
+          "voiced_ratio": 0.714
+        },
+        "delta_f0_mean": 2.79
+      },
+      {
+        "file": "phrase_2.wav",
+        "f0_profile": {
+          "f0_mean": 203.34,
+          "f0_std": 56.29,
+          "f0_median": 202.13,
+          "f0_iqr": 49.8,
+          "voiced_ratio": 0.81
+        },
+        "delta_f0_mean": 6.56
+      },
+      {
+        "file": "phrase_3.wav",
+        "f0_profile": {
+          "f0_mean": 185.42,
+          "f0_std": 40.78,
+          "f0_median": 174.2,
+          "f0_iqr": 32.35,
+          "voiced_ratio": 0.752
+        },
+        "delta_f0_mean": 27.24
+      },
+      {
+        "file": "phrase_4.wav",
+        "f0_profile": {
+          "f0_mean": 202.75,
+          "f0_std": 67.2,
+          "f0_median": 205.89,
+          "f0_iqr": 60.35,
+          "voiced_ratio": 0.752
+        },
+        "delta_f0_mean": 3.12
+      },
+      {
+        "file": "phrase_5.wav",
+        "f0_profile": {
+          "f0_mean": 218.79,
+          "f0_std": 73.4,
+          "f0_median": 194.73,
+          "f0_iqr": 125.79,
+          "voiced_ratio": 0.682
+        },
+        "delta_f0_mean": 7.95
+      }
+    ],
+    "formant_mild": [
+      {
+        "file": "phrase_0.wav",
+        "f0_profile": {
+          "f0_mean": 239.96,
+          "f0_std": 59.04,
+          "f0_median": 241.36,
+          "f0_iqr": 46.08,
+          "voiced_ratio": 0.726
+        },
+        "delta_f0_mean": 11.02
+      },
+      {
+        "file": "phrase_1.wav",
+        "f0_profile": {
+          "f0_mean": 218.11,
+          "f0_std": 79.71,
+          "f0_median": 208.94,
+          "f0_iqr": 93.12,
+          "voiced_ratio": 0.694
+        },
+        "delta_f0_mean": 0.35
+      },
+      {
+        "file": "phrase_2.wav",
+        "f0_profile": {
+          "f0_mean": 208.99,
+          "f0_std": 58.17,
+          "f0_median": 205.2,
+          "f0_iqr": 46.76,
+          "voiced_ratio": 0.788
+        },
+        "delta_f0_mean": 12.21
+      },
+      {
+        "file": "phrase_3.wav",
+        "f0_profile": {
+          "f0_mean": 226.55,
+          "f0_std": 70.04,
+          "f0_median": 232.39,
+          "f0_iqr": 57.52,
+          "voiced_ratio": 0.714
+        },
+        "delta_f0_mean": 13.89
+      },
+      {
+        "file": "phrase_4.wav",
+        "f0_profile": {
+          "f0_mean": 233.4,
+          "f0_std": 61.92,
+          "f0_median": 223.77,
+          "f0_iqr": 57.05,
+          "voiced_ratio": 0.706
+        },
+        "delta_f0_mean": 33.77
+      },
+      {
+        "file": "phrase_5.wav",
+        "f0_profile": {
+          "f0_mean": 237.55,
+          "f0_std": 71.18,
+          "f0_median": 208.28,
+          "f0_iqr": 117.12,
+          "voiced_ratio": 0.659
+        },
+        "delta_f0_mean": 26.71
+      }
+    ],
+    "formant_medium": [
+      {
+        "file": "phrase_0.wav",
+        "f0_profile": {
+          "f0_mean": 250.03,
+          "f0_std": 64.48,
+          "f0_median": 261.69,
+          "f0_iqr": 46.59,
+          "voiced_ratio": 0.698
+        },
+        "delta_f0_mean": 21.09
+      },
+      {
+        "file": "phrase_1.wav",
+        "f0_profile": {
+          "f0_mean": 233.87,
+          "f0_std": 75.18,
+          "f0_median": 228.83,
+          "f0_iqr": 91.69,
+          "voiced_ratio": 0.663
+        },
+        "delta_f0_mean": 16.11
+      },
+      {
+        "file": "phrase_2.wav",
+        "f0_profile": {
+          "f0_mean": 224.57,
+          "f0_std": 56.24,
+          "f0_median": 222.45,
+          "f0_iqr": 52.41,
+          "voiced_ratio": 0.774
+        },
+        "delta_f0_mean": 27.79
+      },
+      {
+        "file": "phrase_3.wav",
+        "f0_profile": {
+          "f0_mean": 237.86,
+          "f0_std": 71.88,
+          "f0_median": 248.92,
+          "f0_iqr": 66.97,
+          "voiced_ratio": 0.714
+        },
+        "delta_f0_mean": 25.2
+      },
+      {
+        "file": "phrase_4.wav",
+        "f0_profile": {
+          "f0_mean": 242.2,
+          "f0_std": 62.18,
+          "f0_median": 242.44,
+          "f0_iqr": 64.02,
+          "voiced_ratio": 0.696
+        },
+        "delta_f0_mean": 42.57
+      },
+      {
+        "file": "phrase_5.wav",
+        "f0_profile": {
+          "f0_mean": 239.54,
+          "f0_std": 72.08,
+          "f0_median": 223.41,
+          "f0_iqr": 95.53,
+          "voiced_ratio": 0.602
+        },
+        "delta_f0_mean": 28.7
+      }
+    ],
+    "formant_strong": [
+      {
+        "file": "phrase_0.wav",
+        "f0_profile": {
+          "f0_mean": 275.76,
+          "f0_std": 61.92,
+          "f0_median": 289.48,
+          "f0_iqr": 74.54,
+          "voiced_ratio": 0.717
+        },
+        "delta_f0_mean": 46.82
+      },
+      {
+        "file": "phrase_1.wav",
+        "f0_profile": {
+          "f0_mean": 250.29,
+          "f0_std": 80.4,
+          "f0_median": 240.84,
+          "f0_iqr": 95.98,
+          "voiced_ratio": 0.673
+        },
+        "delta_f0_mean": 32.53
+      },
+      {
+        "file": "phrase_2.wav",
+        "f0_profile": {
+          "f0_mean": 243.61,
+          "f0_std": 55.53,
+          "f0_median": 247.65,
+          "f0_iqr": 55.84,
+          "voiced_ratio": 0.759
+        },
+        "delta_f0_mean": 46.83
+      },
+      {
+        "file": "phrase_3.wav",
+        "f0_profile": {
+          "f0_mean": 263.55,
+          "f0_std": 73.07,
+          "f0_median": 279.77,
+          "f0_iqr": 76.85,
+          "voiced_ratio": 0.695
+        },
+        "delta_f0_mean": 50.89
+      },
+      {
+        "file": "phrase_4.wav",
+        "f0_profile": {
+          "f0_mean": 257.13,
+          "f0_std": 59.53,
+          "f0_median": 268.86,
+          "f0_iqr": 76.98,
+          "voiced_ratio": 0.686
+        },
+        "delta_f0_mean": 57.5
+      },
+      {
+        "file": "phrase_5.wav",
+        "f0_profile": {
+          "f0_mean": 244.74,
+          "f0_std": 59.28,
+          "f0_median": 244.71,
+          "f0_iqr": 52.42,
+          "voiced_ratio": 0.614
+        },
+        "delta_f0_mean": 33.9
+      }
+    ],
+    "baseline": [
+      {
+        "file": "phrase_0.wav",
+        "f0_profile": {
+          "f0_mean": 228.94,
+          "f0_std": 56.32,
+          "f0_median": 219.26,
+          "f0_iqr": 56.04,
+          "voiced_ratio": 0.708
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_1.wav",
+        "f0_profile": {
+          "f0_mean": 217.76,
+          "f0_std": 65.87,
+          "f0_median": 219.2,
+          "f0_iqr": 90.99,
+          "voiced_ratio": 0.684
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_2.wav",
+        "f0_profile": {
+          "f0_mean": 196.78,
+          "f0_std": 57.93,
+          "f0_median": 183.98,
+          "f0_iqr": 47.01,
+          "voiced_ratio": 0.774
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_3.wav",
+        "f0_profile": {
+          "f0_mean": 212.66,
+          "f0_std": 53.58,
+          "f0_median": 211.24,
+          "f0_iqr": 45.81,
+          "voiced_ratio": 0.695
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_4.wav",
+        "f0_profile": {
+          "f0_mean": 199.63,
+          "f0_std": 69.95,
+          "f0_median": 200.91,
+          "f0_iqr": 67.37,
+          "voiced_ratio": 0.706
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_5.wav",
+        "f0_profile": {
+          "f0_mean": 210.84,
+          "f0_std": 75.31,
+          "f0_median": 185.68,
+          "f0_iqr": 115.94,
+          "voiced_ratio": 0.636
+        },
+        "delta_f0_mean": 0.0
+      }
+    ]
+  }
+}

@@ -1,13 +1,16 @@
 """
-evaluation/runners/privacy_acoustic_runner.py - Empirical Acoustic Privacy & Pitch Analysis.
+evaluation/runners/privacy_acoustic_runner.py - Physical Acoustic Obfuscation & Pitch Shift Analysis.
 
-Evaluates acoustic dissimilarity between original speech and obfuscated variants
-using objective acoustic feature extraction (F0 fundamental frequency, spectral centroid,
-voiced frame statistics, and pitch distribution divergence).
+Measures physical acoustic transformations between original speech and obfuscated variants
+using objective acoustic feature extraction (F0 fundamental frequency, pitch shift,
+voiced frame statistics, and spectral envelope).
 
-Provides a legitimate acoustic proxy for speaker-identifying frequency modification,
-avoiding arbitrary 'privacy score' heuristics while producing real Pareto curves
-against utility (WER / CER / Routing Accuracy).
+IMPORTANT SCIENTIFIC CAVEAT:
+Speaker privacy was NOT empirically established in this study.
+F0 fundamental frequency modification measures physical pitch transformation, not biometric
+speaker anonymity against neural verification models (e.g. ECAPA-TDNN / x-vectors).
+FormantPreservingObfuscator explicitly preserves the spectral envelope (formants), which
+carries primary speaker identity cues.
 
 Usage:
     python -m evaluation.runners.privacy_acoustic_runner \

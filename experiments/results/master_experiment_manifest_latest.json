@@ -1,17 +1,38 @@
 {
-  "master_run_id": "1a78d917",
-  "timestamp": "2026-09-28T06:19:18.893502+00:00",
-  "elapsed_seconds": 30.99,
-  "environment": {
-    "run_id": "1a78d917",
-    "git_commit": "2fadb08_dirty",
-    "python_version": "3.11.3",
-    "seed": 42
+  "master_run_id": "c109b459",
+  "timestamp": "2026-09-28T09:08:16.223981+00:00",
+  "elapsed_seconds": 46.47,
+  "dataset_verification": {
+    "dev": {
+      "path": "evaluation\\datasets\\dev\\dev_v1.jsonl",
+      "sha256": "1f881eed2fd710edca69755be15aee450f06b2b3798b12a76fd5f39b5ac3d4cb",
+      "status": "VERIFIED_UNCHANGED",
+      "cases_count": 30
+    },
+    "validation": {
+      "path": "evaluation\\datasets\\validation\\validation_v1.jsonl",
+      "sha256": "4844b091a30c09457ad45824e6a5ea9dfd4f4843dab7a1e816e099dc84aaa349",
+      "status": "VERIFIED_UNCHANGED",
+      "cases_count": 12
+    },
+    "held_out_test": {
+      "path": "evaluation\\datasets\\held_out_test\\held_out_test_v1.jsonl",
+      "sha256": "82efa536759a51819176d576aa168ad12c03be7ac0db3487985457791c9924f7",
+      "status": "VERIFIED_UNCHANGED",
+      "cases_count": 30
+    },
+    "challenge": {
+      "path": "evaluation\\datasets\\challenge\\challenge_v1.jsonl",
+      "sha256": "0ded94acbe7bd6e3c050990b3073d989e3ab0b30678c92a2b4b59dd727e0ab66",
+      "status": "VERIFIED_UNCHANGED",
+      "cases_count": 25
+    }
   },
-  "held_out_evaluation": {
+  "level_a_held_out": {
     "dataset": "held_out_test_v1.jsonl",
-    "total_cases": 30,
+    "sample_size": 30,
     "overall_accuracy": 0.8667,
+    "total_failures": 4,
     "by_category": {
       "data_query": {
         "total": 15,
@@ -40,10 +61,11 @@
       }
     }
   },
-  "challenge_evaluation": {
+  "level_a_challenge": {
     "dataset": "challenge_v1.jsonl",
-    "total_cases": 25,
-    "overall_accuracy": 0.84,
+    "sample_size": 25,
+    "overall_accuracy": 0.68,
+    "total_failures": 8,
     "by_category": {
       "non_data_query": {
         "total": 6,
@@ -52,8 +74,8 @@
       },
       "adversarial": {
         "total": 5,
-        "correct": 5,
-        "accuracy": 1.0
+        "correct": 1,
+        "accuracy": 0.2
       },
       "data_query": {
         "total": 14,
@@ -62,63 +84,103 @@
       }
     }
   },
-  "ablation_summary": {
+  "level_b_voice_pipeline": {
+    "evaluation_level": "LEVEL_B_VOICE_PIPELINE",
+    "sample_size": 3,
+    "average_wer": 0.0,
+    "average_cer": 0.0,
+    "task_success_rate": 1.0,
+    "total_pipeline_failures": 0
+  },
+  "ablation_conditions": {
     "full_system": {
-      "condition": "full_system",
+      "description": "All Phase 3/4 reliability mechanisms enabled",
       "routing_accuracy": 0.8667,
       "adversarial_fpr": 0.6,
-      "tool_query_recall": 0.95,
+      "tool_recall": 0.95,
       "correction_safety_rate": 1.0,
-      "transient_fault_recovered": true,
-      "recovery_attempts": 2
+      "tool_alignment_accuracy": 1.0,
+      "misaligned_execution_rate": 0.0,
+      "transient_fault_recovered": true
     },
     "ablate_intent_router": {
-      "condition": "ablate_intent_router",
-      "routing_accuracy": 0.7333,
-      "adversarial_fpr": 0.8,
-      "tool_query_recall": 0.8,
+      "description": "Revert router to Phase 1 18-keyword matching",
+      "routing_accuracy": 0.8,
+      "adversarial_fpr": 1.0,
+      "tool_recall": 0.95,
       "correction_safety_rate": 1.0,
-      "transient_fault_recovered": true,
-      "recovery_attempts": 2
+      "tool_alignment_accuracy": 1.0,
+      "misaligned_execution_rate": 0.0,
+      "transient_fault_recovered": true
     },
     "ablate_correction_guard": {
-      "condition": "ablate_correction_guard",
+      "description": "Bypass transcript correction validation guard",
       "routing_accuracy": 0.8667,
       "adversarial_fpr": 0.6,
-      "tool_query_recall": 0.95,
-      "correction_safety_rate": 0.25,
-      "transient_fault_recovered": true,
-      "recovery_attempts": 2
+      "tool_recall": 0.95,
+      "correction_safety_rate": 0.3333,
+      "tool_alignment_accuracy": 1.0,
+      "misaligned_execution_rate": 0.0,
+      "transient_fault_recovered": true
     },
     "ablate_tool_alignment": {
-      "condition": "ablate_tool_alignment",
+      "description": "Disable intent-tool domain alignment gate",
       "routing_accuracy": 0.8667,
       "adversarial_fpr": 0.6,
-      "tool_query_recall": 0.95,
+      "tool_recall": 0.95,
       "correction_safety_rate": 1.0,
-      "transient_fault_recovered": true,
-      "recovery_attempts": 2
+      "tool_alignment_accuracy": 0.6,
+      "misaligned_execution_rate": 0.4,
+      "transient_fault_recovered": true
     },
     "ablate_retry_policy": {
-      "condition": "ablate_retry_policy",
+      "description": "Disable bounded exponential backoff retries",
       "routing_accuracy": 0.8667,
       "adversarial_fpr": 0.6,
-      "tool_query_recall": 0.95,
+      "tool_recall": 0.95,
       "correction_safety_rate": 1.0,
-      "transient_fault_recovered": false,
-      "recovery_attempts": 1
+      "tool_alignment_accuracy": 1.0,
+      "misaligned_execution_rate": 0.0,
+      "transient_fault_recovered": false
     },
     "unmitigated_baseline": {
-      "condition": "unmitigated_baseline",
-      "routing_accuracy": 0.7333,
-      "adversarial_fpr": 0.8,
-      "tool_query_recall": 0.8,
-      "correction_safety_rate": 0.25,
-      "transient_fault_recovered": false,
-      "recovery_attempts": 1
+      "description": "Pure Phase 1 legacy baseline (no interventions)",
+      "routing_accuracy": 0.8,
+      "adversarial_fpr": 1.0,
+      "tool_recall": 0.95,
+      "correction_safety_rate": 0.3333,
+      "tool_alignment_accuracy": 0.6,
+      "misaligned_execution_rate": 0.4,
+      "transient_fault_recovered": false
     }
   },
-  "acoustic_privacy_summary": {
+  "acoustic_robustness_curve": {
+    "inf": {
+      "snr_db": "inf",
+      "samples": 2,
+      "avg_wer": 0.0,
+      "avg_cer": 0.0,
+      "routing_accuracy": 1.0,
+      "abstention_rate": 0.0
+    },
+    "20": {
+      "snr_db": "20",
+      "samples": 2,
+      "avg_wer": 0.0,
+      "avg_cer": 0.0,
+      "routing_accuracy": 1.0,
+      "abstention_rate": 0.0
+    },
+    "10": {
+      "snr_db": "10",
+      "samples": 2,
+      "avg_wer": 0.0,
+      "avg_cer": 0.0,
+      "routing_accuracy": 1.0,
+      "abstention_rate": 0.0
+    }
+  },
+  "acoustic_obfuscation_profile": {
     "naive_mild": {
       "method": "naive_mild",
       "samples_analyzed": 6,
@@ -169,10 +231,5 @@
       "average_f0_shift_hz": 0.0
     }
   },
-  "robustness_summary": {
-    "total_queries_tested": 15,
-    "clean_accuracy": 1.0,
-    "stressed_accuracy": 1.0,
-    "retention_rate": 1.0
-  }
+  "failures_count": 12
 }
