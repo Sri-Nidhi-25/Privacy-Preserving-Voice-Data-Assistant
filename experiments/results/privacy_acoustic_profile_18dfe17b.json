@@ -1,0 +1,89 @@
+{
+  "run_id": "18dfe17b",
+  "timestamp": "2026-09-28T06:17:06.597046+00:00",
+  "summary": {
+    "baseline": {
+      "method": "baseline",
+      "samples_analyzed": 6,
+      "average_f0_hz": 211.1,
+      "average_f0_std_hz": 63.16,
+      "average_f0_shift_hz": 0.0
+    }
+  },
+  "details": {
+    "naive_mild": [],
+    "naive_medium": [],
+    "naive_strong": [],
+    "formant_mild": [],
+    "formant_medium": [],
+    "formant_strong": [],
+    "baseline": [
+      {
+        "file": "phrase_0.wav",
+        "f0_profile": {
+          "f0_mean": 228.94,
+          "f0_std": 56.32,
+          "f0_median": 219.26,
+          "f0_iqr": 56.04,
+          "voiced_ratio": 0.708
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_1.wav",
+        "f0_profile": {
+          "f0_mean": 217.76,
+          "f0_std": 65.87,
+          "f0_median": 219.2,
+          "f0_iqr": 90.99,
+          "voiced_ratio": 0.684
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_2.wav",
+        "f0_profile": {
+          "f0_mean": 196.78,
+          "f0_std": 57.93,
+          "f0_median": 183.98,
+          "f0_iqr": 47.01,
+          "voiced_ratio": 0.774
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_3.wav",
+        "f0_profile": {
+          "f0_mean": 212.66,
+          "f0_std": 53.58,
+          "f0_median": 211.24,
+          "f0_iqr": 45.81,
+          "voiced_ratio": 0.695
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_4.wav",
+        "f0_profile": {
+          "f0_mean": 199.63,
+          "f0_std": 69.95,
+          "f0_median": 200.91,
+          "f0_iqr": 67.37,
+          "voiced_ratio": 0.706
+        },
+        "delta_f0_mean": 0.0
+      },
+      {
+        "file": "phrase_5.wav",
+        "f0_profile": {
+          "f0_mean": 210.84,
+          "f0_std": 75.31,
+          "f0_median": 185.68,
+          "f0_iqr": 115.94,
+          "voiced_ratio": 0.636
+        },
+        "delta_f0_mean": 0.0
+      }
+    ]
+  }
+}

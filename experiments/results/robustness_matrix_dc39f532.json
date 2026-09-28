@@ -1,0 +1,225 @@
+{
+  "run_id": "dc39f532",
+  "timestamp": "2026-09-28T06:17:08.270996+00:00",
+  "total_conditions": 12,
+  "baseline_features": {
+    "rms_energy": 0.089301,
+    "spectral_centroid_mean": 1882.07,
+    "spectral_centroid_std": 1545.34,
+    "f0_mean_hz": 227.35,
+    "f0_std_hz": 55.01,
+    "voiced_fraction": 0.698
+  },
+  "matrix_conditions": [
+    {
+      "condition_id": 1,
+      "condition_name": "snr_infdB_spd_1.0x_vol_+0dB",
+      "snr_db": "inf",
+      "speed_rate": 1.0,
+      "gain_db": 0.0,
+      "acoustic_features": {
+        "rms_energy": 0.089301,
+        "spectral_centroid_mean": 1882.07,
+        "spectral_centroid_std": 1545.34,
+        "f0_mean_hz": 227.35,
+        "f0_std_hz": 55.01,
+        "voiced_fraction": 0.698
+      },
+      "f0_drift_hz": 0.0,
+      "centroid_drift_hz": 0.0
+    },
+    {
+      "condition_id": 2,
+      "condition_name": "snr_infdB_spd_1.0x_vol_-6dB",
+      "snr_db": "inf",
+      "speed_rate": 1.0,
+      "gain_db": -6.0,
+      "acoustic_features": {
+        "rms_energy": 0.044757,
+        "spectral_centroid_mean": 1882.07,
+        "spectral_centroid_std": 1545.34,
+        "f0_mean_hz": 227.35,
+        "f0_std_hz": 55.01,
+        "voiced_fraction": 0.698
+      },
+      "f0_drift_hz": 0.0,
+      "centroid_drift_hz": 0.0
+    },
+    {
+      "condition_id": 3,
+      "condition_name": "snr_infdB_spd_1.15x_vol_+0dB",
+      "snr_db": "inf",
+      "speed_rate": 1.15,
+      "gain_db": 0.0,
+      "acoustic_features": {
+        "rms_energy": 0.058921,
+        "spectral_centroid_mean": 2057.16,
+        "spectral_centroid_std": 1492.34,
+        "f0_mean_hz": 220.88,
+        "f0_std_hz": 57.04,
+        "voiced_fraction": 0.761
+      },
+      "f0_drift_hz": 6.47,
+      "centroid_drift_hz": 175.09
+    },
+    {
+      "condition_id": 4,
+      "condition_name": "snr_infdB_spd_1.15x_vol_-6dB",
+      "snr_db": "inf",
+      "speed_rate": 1.15,
+      "gain_db": -6.0,
+      "acoustic_features": {
+        "rms_energy": 0.029531,
+        "spectral_centroid_mean": 2057.16,
+        "spectral_centroid_std": 1492.34,
+        "f0_mean_hz": 220.96,
+        "f0_std_hz": 56.88,
+        "voiced_fraction": 0.761
+      },
+      "f0_drift_hz": 6.39,
+      "centroid_drift_hz": 175.09
+    },
+    {
+      "condition_id": 5,
+      "condition_name": "snr_20dB_spd_1.0x_vol_+0dB",
+      "snr_db": 20.0,
+      "speed_rate": 1.0,
+      "gain_db": 0.0,
+      "acoustic_features": {
+        "rms_energy": 0.089733,
+        "spectral_centroid_mean": 2983.99,
+        "spectral_centroid_std": 1054.69,
+        "f0_mean_hz": 187.18,
+        "f0_std_hz": 78.84,
+        "voiced_fraction": 1.0
+      },
+      "f0_drift_hz": 40.17,
+      "centroid_drift_hz": 1101.92
+    },
+    {
+      "condition_id": 6,
+      "condition_name": "snr_20dB_spd_1.0x_vol_-6dB",
+      "snr_db": 20.0,
+      "speed_rate": 1.0,
+      "gain_db": -6.0,
+      "acoustic_features": {
+        "rms_energy": 0.045008,
+        "spectral_centroid_mean": 2987.72,
+        "spectral_centroid_std": 1062.4,
+        "f0_mean_hz": 187.8,
+        "f0_std_hz": 80.46,
+        "voiced_fraction": 1.0
+      },
+      "f0_drift_hz": 39.55,
+      "centroid_drift_hz": 1105.65
+    },
+    {
+      "condition_id": 7,
+      "condition_name": "snr_20dB_spd_1.15x_vol_+0dB",
+      "snr_db": 20.0,
+      "speed_rate": 1.15,
+      "gain_db": 0.0,
+      "acoustic_features": {
+        "rms_energy": 0.059232,
+        "spectral_centroid_mean": 2898.28,
+        "spectral_centroid_std": 1042.51,
+        "f0_mean_hz": 186.78,
+        "f0_std_hz": 79.09,
+        "voiced_fraction": 1.0
+      },
+      "f0_drift_hz": 40.57,
+      "centroid_drift_hz": 1016.21
+    },
+    {
+      "condition_id": 8,
+      "condition_name": "snr_20dB_spd_1.15x_vol_-6dB",
+      "snr_db": 20.0,
+      "speed_rate": 1.15,
+      "gain_db": -6.0,
+      "acoustic_features": {
+        "rms_energy": 0.029653,
+        "spectral_centroid_mean": 2903.16,
+        "spectral_centroid_std": 1049.53,
+        "f0_mean_hz": 197.69,
+        "f0_std_hz": 74.61,
+        "voiced_fraction": 1.0
+      },
+      "f0_drift_hz": 29.66,
+      "centroid_drift_hz": 1021.09
+    },
+    {
+      "condition_id": 9,
+      "condition_name": "snr_10dB_spd_1.0x_vol_+0dB",
+      "snr_db": 10.0,
+      "speed_rate": 1.0,
+      "gain_db": 0.0,
+      "acoustic_features": {
+        "rms_energy": 0.093596,
+        "spectral_centroid_mean": 3343.33,
+        "spectral_centroid_std": 702.98,
+        "f0_mean_hz": 174.61,
+        "f0_std_hz": 81.26,
+        "voiced_fraction": 1.0
+      },
+      "f0_drift_hz": 52.74,
+      "centroid_drift_hz": 1461.26
+    },
+    {
+      "condition_id": 10,
+      "condition_name": "snr_10dB_spd_1.0x_vol_-6dB",
+      "snr_db": 10.0,
+      "speed_rate": 1.0,
+      "gain_db": -6.0,
+      "acoustic_features": {
+        "rms_energy": 0.046939,
+        "spectral_centroid_mean": 3349.42,
+        "spectral_centroid_std": 708.2,
+        "f0_mean_hz": 182.57,
+        "f0_std_hz": 80.21,
+        "voiced_fraction": 0.972
+      },
+      "f0_drift_hz": 44.78,
+      "centroid_drift_hz": 1467.35
+    },
+    {
+      "condition_id": 11,
+      "condition_name": "snr_10dB_spd_1.15x_vol_+0dB",
+      "snr_db": 10.0,
+      "speed_rate": 1.15,
+      "gain_db": 0.0,
+      "acoustic_features": {
+        "rms_energy": 0.061677,
+        "spectral_centroid_mean": 3305.46,
+        "spectral_centroid_std": 705.39,
+        "f0_mean_hz": 178.46,
+        "f0_std_hz": 79.36,
+        "voiced_fraction": 1.0
+      },
+      "f0_drift_hz": 48.89,
+      "centroid_drift_hz": 1423.39
+    },
+    {
+      "condition_id": 12,
+      "condition_name": "snr_10dB_spd_1.15x_vol_-6dB",
+      "snr_db": 10.0,
+      "speed_rate": 1.15,
+      "gain_db": -6.0,
+      "acoustic_features": {
+        "rms_energy": 0.030931,
+        "spectral_centroid_mean": 3292.14,
+        "spectral_centroid_std": 692.15,
+        "f0_mean_hz": 181.47,
+        "f0_std_hz": 80.1,
+        "voiced_fraction": 1.0
+      },
+      "f0_drift_hz": 45.88,
+      "centroid_drift_hz": 1410.07
+    }
+  ],
+  "routing_robustness": {
+    "total_queries_tested": 15,
+    "clean_accuracy": 1.0,
+    "stressed_accuracy": 1.0,
+    "retention_rate": 1.0
+  }
+}

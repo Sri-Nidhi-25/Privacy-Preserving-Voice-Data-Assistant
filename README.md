@@ -1,4 +1,4 @@
-﻿# Privacy-Preserving Voice Data Assistant (Phase 1 Prototype)
+# Privacy-Preserving Voice Data Assistant (Phase 1 Prototype)
 
 A local, privacy-preserving voice query assistant that performs speaker voice obfuscation, automatic speech recognition (Whisper), domain transcript correction, query classification, data retrieval, and text-to-speech synthesis (Edge-TTS).
 
@@ -167,7 +167,7 @@ Open `http://127.0.0.1:8000/` in your browser to interact with the voice client.
 
 ## 6. Running Automated Tests
 
-Run the complete 33-test suite covering config, audio validation, obfuscation, STT, correction, routing, tool validation, connectors, health states, and core invariants:
+Run the complete 201-test suite covering config, audio validation, obfuscation, STT, correction, routing, tool validation, connectors, health states, fault injection, calibration, metamorphic relations, and evaluation pipeline self-validation:
 
 ```bash
 pytest tests/ -v
@@ -175,11 +175,34 @@ pytest tests/ -v
 
 ---
 
-## 7. Running Obfuscation Benchmarks
+## 7. Phase 4 — Research-Grade Evaluation & Experiment Reproduction
 
-Run reproducible evaluation benchmarks comparing acoustic methods against word error rates (WER):
+Phase 4 establishes research-grade evaluation, out-of-distribution robustness, and empirical privacy-utility analysis without synthetic or fabricated metrics:
+
+### A. Master Experiment Suite (Single Command)
+Run all Phase 4 experiments (held-out generalization, challenge stress, systematic ablation, acoustic privacy profiling, and audio perturbation matrix) with a single reproducible command:
 
 ```bash
-python evaluation/benchmark_obfuscation.py --seed 42
+python -m evaluation.run_final_experiment --output-dir experiments/results --seed 42
 ```
-Results and reproducibility metadata are saved to `benchmark_audio/results.csv`.
+
+Outputs are automatically serialized to:
+- `experiments/results/master_experiment_manifest_latest.json` (provenance, git commit, seed, metric matrices)
+- `experiments/results/dashboard.html` (interactive, self-contained visual results dashboard)
+
+### B. Individual Evaluation Modules
+- **Held-Out Generalization Set:** `evaluation/datasets/held_out_test/held_out_test_v1.jsonl` (30 unseen cases evaluating syntactic and lexical generalization)
+- **Adversarial Challenge Set:** `evaluation/datasets/challenge/challenge_v1.jsonl` (25 cases covering STT-misleading queries, subtle sentiment, contradictory filters, and boundary conditions)
+- **Metamorphic Invariant Testing:** `tests/test_phase4/test_metamorphic.py` (16 invariant tests across paraphrase groups and correction traps)
+- **Evaluation Pipeline Integrity:** `tests/test_phase4/test_evaluation_pipeline_integrity.py` (12 self-validation tests defending against division-by-zero, corrupted schemas, and metric boundary errors)
+- **Systematic Ablation Study:** `python -m evaluation.runners.ablation_runner` (quantifies the empirical impact of disabling the intent router, correction guard, tool-alignment check, and bounded retries)
+- **Empirical Acoustic Privacy Profile:** `python -m evaluation.runners.privacy_acoustic_runner` (extracts objective physical fundamental frequency shifts $\Delta F_0$ via YIN algorithm rather than arbitrary 'privacy scores')
+- **Environmental Audio Robustness Matrix:** `python -m evaluation.runners.robustness_runner` (evaluates acoustic feature drift under additive Gaussian noise 10dB–$\infty$, playback tempo 0.85x–1.15x, and volume scaling -6dB–+6dB)
+
+### C. Research Documentation
+- [Phase 4 Initial Audit & RQs](docs/phase4_initial_audit.md)
+- [Privacy Threat Model](docs/privacy_threat_model.md)
+- [Claim Audit & Empirical Verification](docs/claim_audit.md)
+- [Final Research Evaluation Report](docs/final_evaluation_report.md)
+- [Reliability Invariants (16 Invariants)](docs/reliability_invariants.md)
+

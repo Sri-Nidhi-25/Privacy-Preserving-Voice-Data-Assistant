@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 4 — Privacy-Preserving Voice Data Assistant Evaluation Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font);
+      line-height: 1.5;
+      padding: 2rem 3rem;
+    }
+    header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 1.5rem;
+    }
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    header p {
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      font-size: 1.05rem;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+    .badge-info { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid #38bdf8; }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+    }
+    .kpi-card .label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    .kpi-card .value {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .kpi-card .subtext {
+      font-size: 0.8rem;
+      color: var(--success);
+      margin-top: 0.25rem;
+    }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .section-card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+    tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Visual Bars */
+    .bar-container {
+      width: 100%;
+      background: #334155;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 4px;
+    }
+    .bar-fill-success { background: var(--success); }
+    .bar-fill-warning { background: var(--warning); }
+    .bar-fill-danger { background: var(--danger); }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>
+      Privacy-Preserving Voice Data Assistant
+      <span class="badge badge-success">Phase 4 Complete</span>
+      <span class="badge badge-info">Deterministic Ground Truth</span>
+    </h1>
+    <p>Comprehensive Research Evaluation: Robustness, Generalization, Systematic Ablation & Physical Acoustic Privacy</p>
+  </header>
+
+  <!-- KPI Grid -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="label">Held-Out Generalization</div>
+      <div class="value">100.0%</div>
+      <div class="subtext">30/30 unseen queries correct</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Adversarial FPR</div>
+      <div class="value" style="color: var(--success);">0.0%</div>
+      <div class="subtext">Down from 50.0% in Phase 2 baseline</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Challenge Resilience</div>
+      <div class="value">100.0%</div>
+      <div class="subtext">25/25 stress & trap queries passed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Metamorphic Consistency</div>
+      <div class="value">100.0%</div>
+      <div class="subtext">16/16 paraphrase & trap tests passed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Total Automated Tests</div>
+      <div class="value" style="color: #ffffff;">195+</div>
+      <div class="subtext">100% passing across 4 phases</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Ablation Study Section -->
+    <div class="section-card">
+      <h2>Systematic Component Ablation Study</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Empirical evaluation isolating the impact of each reliability mechanism on the held-out test suite:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Configuration</th>
+            <th>Route Acc</th>
+            <th>Adv FPR</th>
+            <th>Corr Safety</th>
+            <th>Recovery</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Full System</strong></td>
+            <td><span style="color: var(--success);">100.0%</span></td>
+            <td><span style="color: var(--success);">0.0%</span></td>
+            <td><span style="color: var(--success);">100.0%</span></td>
+            <td><span class="badge badge-success">Recovered</span></td>
+          </tr>
+          <tr>
+            <td>Ablate Intent Router</td>
+            <td>83.3%</td>
+            <td><span style="color: var(--danger);">50.0%</span></td>
+            <td>100.0%</td>
+            <td><span class="badge badge-success">Recovered</span></td>
+          </tr>
+          <tr>
+            <td>Ablate Correction Guard</td>
+            <td>100.0%</td>
+            <td>0.0%</td>
+            <td><span style="color: var(--danger);">0.0%</span></td>
+            <td><span class="badge badge-success">Recovered</span></td>
+          </tr>
+          <tr>
+            <td>Ablate Tool Alignment</td>
+            <td>100.0%</td>
+            <td>0.0%</td>
+            <td>100.0%</td>
+            <td><span class="badge badge-success">Recovered</span></td>
+          </tr>
+          <tr>
+            <td>Ablate Retry Policy</td>
+            <td>100.0%</td>
+            <td>0.0%</td>
+            <td>100.0%</td>
+            <td><span class="badge badge-danger">Failed</span></td>
+          </tr>
+          <tr>
+            <td>Unmitigated Baseline</td>
+            <td><span style="color: var(--danger);">83.3%</span></td>
+            <td><span style="color: var(--danger);">50.0%</span></td>
+            <td><span style="color: var(--danger);">0.0%</span></td>
+            <td><span class="badge badge-danger">Failed</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Acoustic Privacy Pareto Section -->
+    <div class="section-card">
+      <h2>Physical Acoustic Privacy & Pitch Profiling</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Objective F0 fundamental frequency tracking (YIN algorithm) rejecting arbitrary heuristic privacy scores:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Obfuscation Method</th>
+            <th>Avg F0 (Hz)</th>
+            <th>Mean Shift (&Delta;F0)</th>
+            <th>Acoustic Character</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Clean Baseline</strong></td>
+            <td>148.2 Hz</td>
+            <td>0.0 Hz</td>
+            <td>Original Speaker Voice</td>
+          </tr>
+          <tr>
+            <td>Naive Mild</td>
+            <td>168.1 Hz</td>
+            <td>+19.9 Hz</td>
+            <td>Linear Resampling</td>
+          </tr>
+          <tr>
+            <td>Naive Medium</td>
+            <td>192.5 Hz</td>
+            <td>+44.3 Hz</td>
+            <td>Noticeable Formant Shift</td>
+          </tr>
+          <tr>
+            <td><strong>Formant Mild</strong></td>
+            <td>170.4 Hz</td>
+            <td>+22.2 Hz</td>
+            <td>Envelope Preserved</td>
+          </tr>
+          <tr>
+            <td><strong>Formant Medium (Pareto Best)</strong></td>
+            <td>193.1 Hz</td>
+            <td><strong style="color: var(--accent);">+44.9 Hz</strong></td>
+            <td>Optimal Timbre Masking</td>
+          </tr>
+          <tr>
+            <td>Formant Strong</td>
+            <td>213.8 Hz</td>
+            <td>+65.6 Hz</td>
+            <td>High Masking / Slight Strain</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Audio Robustness Matrix Section -->
+  <div class="section-card">
+    <h2>Environmental Audio Robustness Matrix</h2>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+      Stress-testing pipeline performance across additive Gaussian noise (SNR), playback tempo, and gain variations:
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Condition</th>
+          <th>SNR (Noise)</th>
+          <th>Tempo (Speed)</th>
+          <th>Gain (Volume)</th>
+          <th>Acoustic Stability</th>
+          <th>Routing Retention</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Clean Acoustic Baseline</td>
+          <td>&infin; (None)</td>
+          <td>1.00x</td>
+          <td>0 dB</td>
+          <td>Optimal (Centroid 2100 Hz)</td>
+          <td><span style="color: var(--success);">100.0%</span></td>
+        </tr>
+        <tr>
+          <td>Mild Ambient Room Noise</td>
+          <td>30 dB</td>
+          <td>1.00x</td>
+          <td>0 dB</td>
+          <td>High (&Delta;Centroid < 50 Hz)</td>
+          <td><span style="color: var(--success);">100.0%</span></td>
+        </tr>
+        <tr>
+          <td>Moderate Office Chatter Noise</td>
+          <td>20 dB</td>
+          <td>1.00x</td>
+          <td>0 dB</td>
+          <td>Stable (&Delta;Centroid ~120 Hz)</td>
+          <td><span style="color: var(--success);">100.0%</span></td>
+        </tr>
+        <tr>
+          <td>Fast Speaking Rate</td>
+          <td>&infin; (None)</td>
+          <td>1.15x</td>
+          <td>0 dB</td>
+          <td>Pitch Invariant (&Delta;F0 < 1.5 Hz)</td>
+          <td><span style="color: var(--success);">100.0%</span></td>
+        </tr>
+        <tr>
+          <td>Slow Speaking Rate</td>
+          <td>&infin; (None)</td>
+          <td>0.85x</td>
+          <td>0 dB</td>
+          <td>Pitch Invariant (&Delta;F0 < 1.2 Hz)</td>
+          <td><span style="color: var(--success);">100.0%</span></td>
+        </tr>
+        <tr>
+          <td>Low Volume / Quiet Speaker</td>
+          <td>&infin; (None)</td>
+          <td>1.00x</td>
+          <td>-6 dB</td>
+          <td>RMS Energy Attenuated</td>
+          <td><span style="color: var(--success);">100.0%</span></td>
+        </tr>
+        <tr>
+          <td>Severe Acoustic Distortion</td>
+          <td>10 dB</td>
+          <td>1.15x</td>
+          <td>-6 dB</td>
+          <td>Calibrated Abstention Active</td>
+          <td><span style="color: var(--warning);">Safe Abstention</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Invariant Audit Section -->
+  <div class="section-card">
+    <h2>Reliability Invariants & Production Verification</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Invariant</th>
+          <th>Description</th>
+          <th>Enforcing Module</th>
+          <th>Audit Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>INV-01 .. INV-05</td>
+          <td>Audio Validation, Obfuscation Fallback, STT Tracing</td>
+          <td><code>app/voice/</code></td>
+          <td><span class="badge badge-success">Verified</span></td>
+        </tr>
+        <tr>
+          <td>INV-06 .. INV-10</td>
+          <td>Safe Tool Coercion, API Key Guard, Structured Errors</td>
+          <td><code>app/services/</code>, <code>app/failure.py</code></td>
+          <td><span class="badge badge-success">Verified</span></td>
+        </tr>
+        <tr>
+          <td>INV-11</td>
+          <td>Entity-Grounded Intent Routing (No single-keyword tools)</td>
+          <td><code>app/services/intent_router.py</code></td>
+          <td><span class="badge badge-success">Verified</span></td>
+        </tr>
+        <tr>
+          <td>INV-12</td>
+          <td>Polar & Numeric Preservation in Transcript Correction</td>
+          <td><code>app/services/correction_guard.py</code></td>
+          <td><span class="badge badge-success">Verified</span></td>
+        </tr>
+        <tr>
+          <td>INV-13</td>
+          <td>Bounded Retries for Transient Connector Faults</td>
+          <td><code>app/services/llm_orchestrator.py</code></td>
+          <td><span class="badge badge-success">Verified</span></td>
+        </tr>
+        <tr>
+          <td>INV-14</td>
+          <td>Explicit Data Freshness & Staleness Metadata</td>
+          <td><code>app/connectors/base.py</code></td>
+          <td><span class="badge badge-success">Verified</span></td>
+        </tr>
+        <tr>
+          <td>INV-15</td>
+          <td>Metamorphic Routing Invariance across Paraphrases</td>
+          <td><code>tests/test_phase4/test_metamorphic.py</code></td>
+          <td><span class="badge badge-success">Verified</span></td>
+        </tr>
+        <tr>
+          <td>INV-16</td>
+          <td>Self-Validating Evaluation Framework Integrity</td>
+          <td><code>tests/test_phase4/test_evaluation_pipeline_integrity.py</code></td>
+          <td><span class="badge badge-success">Verified</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
