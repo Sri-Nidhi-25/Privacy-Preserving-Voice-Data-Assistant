@@ -1,0 +1,1160 @@
+{
+  "total_failures": 77,
+  "failures": [
+    {
+      "dataset_id": "phase5_dev",
+      "case_id": "p5_dev_011",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "I bought a concert ticket for tomorrow evening",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_dev",
+      "case_id": "p5_dev_012",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Customer feedback was overwhelmingly positive after the demo",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_dev",
+      "case_id": "p5_dev_014",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "She showed great enthusiasm for customer satisfaction",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_dev",
+      "case_id": "p5_dev_016",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Tell me about customers",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_dev",
+      "case_id": "p5_dev_018",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Our sales team crushed active customer targets this quarter",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_dev",
+      "case_id": "p5_dev_018",
+      "system": "abstention_intervention",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Our sales team crushed active customer targets this quarter",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_dev",
+      "case_id": "p5_dev_019",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Support tickets were flying in after the power outage yesterday",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_008",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "We booked a round-trip plane ticket to Chicago",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_009",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Customer loyalty has always been an important business concept",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_012",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Analytics reports showed that mobile browsing is on the rise globally",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_analytics"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_014",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Can you give me an update on tickets?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_014",
+      "system": "abstention_intervention",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Can you give me an update on tickets?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_016",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Clients are really engaged with our new CRM features",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_017",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Customer responses from the product launch were incredible",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_018",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "The ticket inspector checked everyone on the commuter train",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_val",
+      "case_id": "p5_val_020",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Generate an email apology for delayed customer shipments",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "frozen_held_out",
+      "case_id": "ho_adv_001",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "I bought a concert ticket for tomorrow performance",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "frozen_held_out",
+      "case_id": "ho_adv_002",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Customer feedback was overwhelmingly positive during the product launch",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "frozen_held_out",
+      "case_id": "ho_adv_005",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "She showed great enthusiasm for customer satisfaction",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "frozen_held_out",
+      "case_id": "ho_amb_001",
+      "system": "baseline",
+      "failure_code": "LEXICAL_ANCHORING",
+      "input_text": "Look up open issues",
+      "expected": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_stt_004",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Tell me how support ticket priority is calculated",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_adv_001",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Our sales team crushed active customer targets this quarter",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_adv_001",
+      "system": "abstention_intervention",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Our sales team crushed active customer targets this quarter",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_adv_002",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "The analytics on our product launch were incredible",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_analytics"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_adv_003",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Support tickets were flying in after the outage",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_adv_004",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Customers have been really engaged with our new CRM",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_adv_005",
+      "system": "abstention_intervention",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Our analysts are reviewing active engagement metrics internally",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_analytics"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_bnd_006",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "List top negative five customers",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_bnd_006",
+      "system": "abstention_intervention",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "List top negative five customers",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_trp_001",
+      "system": "baseline",
+      "failure_code": "LEXICAL_ANCHORING",
+      "input_text": "Fetch inactve custumers",
+      "expected": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "frozen_challenge",
+      "case_id": "ch_trp_003",
+      "system": "baseline",
+      "failure_code": "LEXICAL_ANCHORING",
+      "input_text": "Retreive acive accunts",
+      "expected": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_001",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "The customer.",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_002",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Tickets please.",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_003",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Customer feedback was overwhelmingly positive during the product launch",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_004",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Our customer service received outstanding reviews from visitors",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_005",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "I bought a concert ticket for tomorrow night performance",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_006",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "We booked a round-trip plane ticket to San Francisco last week",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_007",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Our active volunteers did better than the customer support team at the 5k run",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_008",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Comparing customer satisfaction across decades reveals interesting cultural shifts",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_009",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Can you order two movie tickets online for the eight o clock show",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_010",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Help me draft a warm thank-you note to a valued customer",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_011",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Both the customer and the support agent attended the annual company gala",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_012",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "CRM systems and support ticket queues were discussed at the tech seminar",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_013",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "The analytics seminar explored customer psychology in modern retail environments",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_015",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "It would be wonderful to know what customers think about our branding",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_017",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "What is the historical origin of customer loyalty programs?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_018",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Why do lottery tickets have such low odds of winning?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_distractors",
+      "case_id": "dis_019",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "She showed great enthusiasm for customer satisfaction",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_ambiguity",
+      "case_id": "amb_001",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Tell me about customers",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_ambiguity",
+      "case_id": "amb_004",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Tickets update",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_ambiguity",
+      "case_id": "amb_005",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Can you look at analytics?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_analytics"
+      }
+    },
+    {
+      "dataset_id": "phase5_ambiguity",
+      "case_id": "amb_008",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "How are our accounts looking?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_ambiguity",
+      "case_id": "amb_009",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Customer stuff",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_ambiguity",
+      "case_id": "amb_012",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Any new tickets?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_ambiguity",
+      "case_id": "amb_013",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Analytics overview",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_analytics"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_001",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Our sales team crushed active customer targets this quarter",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_001",
+      "system": "abstention_intervention",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Our sales team crushed active customer targets this quarter",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_002",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Customer responses from the product launch were incredible",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_003",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Support tickets were flying in after the power outage yesterday",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_004",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Clients are really engaged with our new CRM features",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_005",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "The ticket inspector checked everyone on the commuter train",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_006",
+      "system": "baseline",
+      "failure_code": "SEMANTIC_DISTRACTOR",
+      "input_text": "Speeding ticket fines increased significantly in our county",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_009",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Every customer in the coffee shop cheered for the barista",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_010",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Golden tickets were hidden inside chocolate bars",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_011",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "The analytics engine behind search algorithms is fascinating",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_analytics"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_011",
+      "system": "abstention_intervention",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "The analytics engine behind search algorithms is fascinating",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_analytics"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_013",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Ticket scalpers were arrested outside the football stadium",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_adversarial",
+      "case_id": "adv_015",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Customer service philosophies evolved dramatically over decades",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_001",
+      "system": "baseline",
+      "failure_code": "LEXICAL_ANCHORING",
+      "input_text": "Catalog every patron whose membership remains in good standing",
+      "expected": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_004",
+      "system": "baseline",
+      "failure_code": "LEXICAL_ANCHORING",
+      "input_text": "I wonder if anyone filed an issue about the broken checkout button",
+      "expected": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_006",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Write a python script to simulate CRM customer retention",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_007",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Draft a formal apology letter to ticket holders of the canceled concert",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_009",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "What SQL query would join the customer table with the ticket table?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_010",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "How do airlines overbook tickets without passenger rioting?",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_013",
+      "system": "baseline",
+      "failure_code": "LEXICAL_ANCHORING",
+      "input_text": "Can you summarize user activity surges across the prior week?",
+      "expected": {
+        "route": "tool",
+        "tool": "get_analytics"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_014",
+      "system": "baseline",
+      "failure_code": "DOMAIN_AMBIGUITY",
+      "input_text": "Summarize the GDPR compliance obligations for storing client records",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      }
+    },
+    {
+      "dataset_id": "phase5_ood",
+      "case_id": "ood_015",
+      "system": "baseline",
+      "failure_code": "MISSING_OPERATION",
+      "input_text": "Compare Zendesk with Salesforce Service Cloud for ticket workflows",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{"case_id": "ood_001", "input_text": "Catalog every patron whose membership remains in good standing", "expected_route": "tool", "expected_tool": "get_crm_data", "notes": "Formal patron synonym for customer"}
+{"case_id": "ood_002", "input_text": "Surface any unresolved grievances marked high urgency", "expected_route": "tool", "expected_tool": "get_support_tickets", "notes": "Grievance synonym for ticket"}
+{"case_id": "ood_003", "input_text": "Tabulate platform engagement frequency over the fortnightly span", "expected_route": "tool", "expected_tool": "get_analytics", "notes": "Archaic/formal phrasing for 14 days"}
+{"case_id": "ood_004", "input_text": "I wonder if anyone filed an issue about the broken checkout button", "expected_route": "tool", "expected_tool": "get_support_tickets", "notes": "Indirect search intent"}
+{"case_id": "ood_005", "input_text": "Dig into the customer graveyard for deactivated corporate accounts", "expected_route": "tool", "expected_tool": "get_crm_data", "notes": "Metaphorical phrasing for inactive accounts"}
+{"case_id": "ood_006", "input_text": "Write a python script to simulate CRM customer retention", "expected_route": "direct", "expected_tool": null, "notes": "Code generation request"}
+{"case_id": "ood_007", "input_text": "Draft a formal apology letter to ticket holders of the canceled concert", "expected_route": "direct", "expected_tool": null, "notes": "Creative correspondence"}
+{"case_id": "ood_008", "input_text": "Explain the mathematical difference between median and mean in user metrics", "expected_route": "direct", "expected_tool": null, "notes": "Mathematical exposition"}
+{"case_id": "ood_009", "input_text": "What SQL query would join the customer table with the ticket table?", "expected_route": "direct", "expected_tool": null, "notes": "Database engineering query"}
+{"case_id": "ood_010", "input_text": "How do airlines overbook tickets without passenger rioting?", "expected_route": "direct", "expected_tool": null, "notes": "Aviation policy inquiry"}
+{"case_id": "ood_011", "input_text": "Inspect whether any client profiles lack a verified phone number", "expected_route": "tool", "expected_tool": "get_crm_data", "notes": "Inspection imperative"}
+{"case_id": "ood_012", "input_text": "Are there urgent technical hurdles logged by our tier two helpdesk?", "expected_route": "tool", "expected_tool": "get_support_tickets", "notes": "Helpdesk synonym"}
+{"case_id": "ood_013", "input_text": "Can you summarize user activity surges across the prior week?", "expected_route": "tool", "expected_tool": "get_analytics", "notes": "Activity surges synonym"}
+{"case_id": "ood_014", "input_text": "Summarize the GDPR compliance obligations for storing client records", "expected_route": "direct", "expected_tool": null, "notes": "Legal compliance inquiry"}
+{"case_id": "ood_015", "input_text": "Compare Zendesk with Salesforce Service Cloud for ticket workflows", "expected_route": "direct", "expected_tool": null, "notes": "Product comparison"}

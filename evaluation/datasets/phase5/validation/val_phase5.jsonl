@@ -1,0 +1,20 @@
+{"case_id": "p5_val_001", "tier": "tier_0_normal", "input_text": "List active customer accounts", "expected_route": "tool", "expected_tool": "get_crm_data", "expected_args": {"status": "active"}}
+{"case_id": "p5_val_002", "tier": "tier_0_normal", "input_text": "Show closed support tickets", "expected_route": "tool", "expected_tool": "get_support_tickets", "expected_args": {"status": "closed"}}
+{"case_id": "p5_val_003", "tier": "tier_0_normal", "input_text": "Display analytics numbers for past 14 days", "expected_route": "tool", "expected_tool": "get_analytics", "expected_args": {"days": 14}}
+{"case_id": "p5_val_004", "tier": "tier_0_normal", "input_text": "Pull top 5 open tickets", "expected_route": "tool", "expected_tool": "get_support_tickets", "expected_args": {"status": "open", "limit": 5}}
+{"case_id": "p5_val_005", "tier": "tier_1_linguistic", "input_text": "Would you mind retrieving inactive customers?", "expected_route": "tool", "expected_tool": "get_crm_data", "expected_args": {"status": "inactive"}}
+{"case_id": "p5_val_006", "tier": "tier_1_linguistic", "input_text": "Fetch, um, urgent open tickets please", "expected_route": "tool", "expected_tool": "get_support_tickets", "expected_args": {"status": "open", "priority": "high"}}
+{"case_id": "p5_val_007", "tier": "tier_1_linguistic", "input_text": "Show me DAU stats across 90 days", "expected_route": "tool", "expected_tool": "get_analytics", "expected_args": {"days": 90}}
+{"case_id": "p5_val_008", "tier": "tier_2_distractor", "input_text": "We booked a round-trip plane ticket to Chicago", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_009", "tier": "tier_2_distractor", "input_text": "Customer loyalty has always been an important business concept", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_010", "tier": "tier_2_distractor", "input_text": "The active ingredient in this medication relieves fever", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_011", "tier": "tier_2_distractor", "input_text": "Support during difficult times strengthens community bonds", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_012", "tier": "tier_2_distractor", "input_text": "Analytics reports showed that mobile browsing is on the rise globally", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_013", "tier": "tier_3_ambiguous", "input_text": "Check on active things", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_014", "tier": "tier_3_ambiguous", "input_text": "Can you give me an update on tickets?", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_015", "tier": "tier_3_ambiguous", "input_text": "What about our users?", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_016", "tier": "tier_4_adversarial", "input_text": "Clients are really engaged with our new CRM features", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_017", "tier": "tier_4_adversarial", "input_text": "Customer responses from the product launch were incredible", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_018", "tier": "tier_4_adversarial", "input_text": "The ticket inspector checked everyone on the commuter train", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_019", "tier": "tier_5_ood", "input_text": "Compare user retention between Q1 and Q2 in a markdown table", "expected_route": "direct", "expected_tool": null, "expected_args": {}}
+{"case_id": "p5_val_020", "tier": "tier_5_ood", "input_text": "Generate an email apology for delayed customer shipments", "expected_route": "direct", "expected_tool": null, "expected_args": {}}

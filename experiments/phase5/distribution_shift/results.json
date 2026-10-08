@@ -1,0 +1,70 @@
+{
+  "results_by_tier": {
+    "tier_0_normal": {
+      "tier": "tier_0_normal",
+      "sample_size": 9,
+      "baseline_accuracy": 1.0,
+      "baseline_fpr": 0.0,
+      "abstention_coverage": 1.0,
+      "abstention_unsafe_risk": 0.0,
+      "abstention_unsafe_rate": 0.0,
+      "abstention_safe_rate": 0.0,
+      "delta_unsafe_reduction": 0.0
+    },
+    "tier_1_linguistic": {
+      "tier": "tier_1_linguistic",
+      "sample_size": 8,
+      "baseline_accuracy": 1.0,
+      "baseline_fpr": 0.0,
+      "abstention_coverage": 0.875,
+      "abstention_unsafe_risk": 0.0,
+      "abstention_unsafe_rate": 0.0,
+      "abstention_safe_rate": 0.0,
+      "delta_unsafe_reduction": 0.0
+    },
+    "tier_2_distractor": {
+      "tier": "tier_2_distractor",
+      "sample_size": 30,
+      "baseline_accuracy": 0.2333,
+      "baseline_fpr": 0.7667,
+      "abstention_coverage": 0.0,
+      "abstention_unsafe_risk": 0.0,
+      "abstention_unsafe_rate": 0.0,
+      "abstention_safe_rate": 1.0,
+      "delta_unsafe_reduction": 0.7667
+    },
+    "tier_3_ambiguous": {
+      "tier": "tier_3_ambiguous",
+      "sample_size": 20,
+      "baseline_accuracy": 0.55,
+      "baseline_fpr": 0.45,
+      "abstention_coverage": 0.05,
+      "abstention_unsafe_risk": 1.0,
+      "abstention_unsafe_rate": 0.05,
+      "abstention_safe_rate": 0.95,
+      "delta_unsafe_reduction": 0.4
+    },
+    "tier_4_adversarial": {
+      "tier": "tier_4_adversarial",
+      "sample_size": 20,
+      "baseline_accuracy": 0.2,
+      "baseline_fpr": 0.8,
+      "abstention_coverage": 0.15,
+      "abstention_unsafe_risk": 1.0,
+      "abstention_unsafe_rate": 0.15,
+      "abstention_safe_rate": 0.85,
+      "delta_unsafe_reduction": 0.65
+    },
+    "tier_5_ood": {
+      "tier": "tier_5_ood",
+      "sample_size": 18,
+      "baseline_accuracy": 0.4444,
+      "baseline_fpr": 0.3889,
+      "abstention_coverage": 0.2778,
+      "abstention_unsafe_risk": 0.0,
+      "abstention_unsafe_rate": 0.0,
+      "abstention_safe_rate": 0.5556,
+      "delta_unsafe_reduction": 0.3889
+    }
+  }
+}

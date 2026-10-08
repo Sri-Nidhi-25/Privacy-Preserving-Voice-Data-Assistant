@@ -1,0 +1,209 @@
+{
+  "total_failures": 12,
+  "failures": [
+    {
+      "case_id": "ho_adv_001",
+      "dataset": "held_out_test_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "I bought a concert ticket for tomorrow performance",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets",
+        "intent": "SUPPORT_QUERY"
+      },
+      "notes": "ticket keyword in music context"
+    },
+    {
+      "case_id": "ho_adv_002",
+      "dataset": "held_out_test_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "Customer feedback was overwhelmingly positive during the product launch",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data",
+        "intent": "CRM_QUERY"
+      },
+      "notes": "customer sentiment"
+    },
+    {
+      "case_id": "ho_adv_005",
+      "dataset": "held_out_test_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "She showed great enthusiasm for customer satisfaction",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data",
+        "intent": "CRM_QUERY"
+      },
+      "notes": "customer satisfaction non-query"
+    },
+    {
+      "case_id": "ho_amb_001",
+      "dataset": "held_out_test_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_NEGATIVE",
+      "input_text": "Look up open issues",
+      "expected": {
+        "route": "tool",
+        "tool": "get_support_tickets"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null,
+        "intent": "DIRECT"
+      },
+      "notes": "open issues"
+    },
+    {
+      "case_id": "ch_stt_004",
+      "dataset": "challenge_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "Tell me how support ticket priority is calculated",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets",
+        "intent": "SUPPORT_QUERY"
+      },
+      "notes": "asks about system logic, not a ticket fetch"
+    },
+    {
+      "case_id": "ch_adv_001",
+      "dataset": "challenge_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "Our sales team crushed active customer targets this quarter",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data",
+        "intent": "CRM_QUERY"
+      },
+      "notes": "praise statement with active customers as subject"
+    },
+    {
+      "case_id": "ch_adv_002",
+      "dataset": "challenge_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "The analytics on our product launch were incredible",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_analytics",
+        "intent": "ANALYTICS_QUERY"
+      },
+      "notes": "past-tense sentiment about analytics results"
+    },
+    {
+      "case_id": "ch_adv_003",
+      "dataset": "challenge_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "Support tickets were flying in after the outage",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_support_tickets",
+        "intent": "SUPPORT_QUERY"
+      },
+      "notes": "narrative description, not a retrieval request"
+    },
+    {
+      "case_id": "ch_adv_004",
+      "dataset": "challenge_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "Customers have been really engaged with our new CRM",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data",
+        "intent": "CRM_QUERY"
+      },
+      "notes": "general business observation"
+    },
+    {
+      "case_id": "ch_bnd_006",
+      "dataset": "challenge_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_POSITIVE",
+      "input_text": "List top negative five customers",
+      "expected": {
+        "route": "direct",
+        "tool": null
+      },
+      "observed": {
+        "route": "tool",
+        "tool": "get_crm_data",
+        "intent": "CRM_QUERY"
+      },
+      "notes": "nonsensical negative limit; treated as direct"
+    },
+    {
+      "case_id": "ch_trp_001",
+      "dataset": "challenge_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_NEGATIVE",
+      "input_text": "Fetch inactve custumers",
+      "expected": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null,
+        "intent": "DIRECT"
+      },
+      "notes": "inactive misspelled; correction must preserve intent"
+    },
+    {
+      "case_id": "ch_trp_003",
+      "dataset": "challenge_v1.jsonl",
+      "failed_stage": "routing",
+      "failure_code": "ROUTING_FALSE_NEGATIVE",
+      "input_text": "Retreive acive accunts",
+      "expected": {
+        "route": "tool",
+        "tool": "get_crm_data"
+      },
+      "observed": {
+        "route": "direct",
+        "tool": null,
+        "intent": "DIRECT"
+      },
+      "notes": "active misspelled; must not flip to inactive"
+    }
+  ]
+}

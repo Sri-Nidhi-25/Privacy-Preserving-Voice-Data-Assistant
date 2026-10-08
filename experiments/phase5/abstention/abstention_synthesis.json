@@ -1,0 +1,1047 @@
+{
+  "run_id": "a31bf177",
+  "timestamp": "2026-10-08T03:55:11.945319+00:00",
+  "optimal_threshold": 0.5,
+  "generalization_summary": {
+    "phase5_dev": {
+      "dataset_id": "phase5_dev",
+      "sample_size": 20,
+      "baseline": {
+        "accuracy": 0.7,
+        "false_positive_rate": 0.3,
+        "false_negative_rate": 0.0,
+        "unsafe_execution_rate": 0.3
+      },
+      "abstention_intervention": {
+        "coverage": 0.55,
+        "risk": 0.0909,
+        "selective_accuracy": 0.9091,
+        "unsafe_execution_rate": 0.05,
+        "safe_abstentions": 9,
+        "false_abstentions": 0,
+        "aurc": 0.0023
+      },
+      "risk_coverage_curve": [
+        {
+          "threshold": 0.1,
+          "coverage": 0.55,
+          "risk": 0.0909,
+          "selective_accuracy": 0.9091,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 11,
+          "correct_executions": 10,
+          "unsafe_executions": 1,
+          "safe_abstentions": 9,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.2,
+          "coverage": 0.55,
+          "risk": 0.0909,
+          "selective_accuracy": 0.9091,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 11,
+          "correct_executions": 10,
+          "unsafe_executions": 1,
+          "safe_abstentions": 9,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.3,
+          "coverage": 0.55,
+          "risk": 0.0909,
+          "selective_accuracy": 0.9091,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 11,
+          "correct_executions": 10,
+          "unsafe_executions": 1,
+          "safe_abstentions": 9,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.4,
+          "coverage": 0.55,
+          "risk": 0.0909,
+          "selective_accuracy": 0.9091,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 11,
+          "correct_executions": 10,
+          "unsafe_executions": 1,
+          "safe_abstentions": 9,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.5,
+          "coverage": 0.55,
+          "risk": 0.0909,
+          "selective_accuracy": 0.9091,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 11,
+          "correct_executions": 10,
+          "unsafe_executions": 1,
+          "safe_abstentions": 9,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.55,
+          "risk": 0.0909,
+          "selective_accuracy": 0.9091,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 11,
+          "correct_executions": 10,
+          "unsafe_executions": 1,
+          "safe_abstentions": 9,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.55,
+          "risk": 0.0909,
+          "selective_accuracy": 0.9091,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 11,
+          "correct_executions": 10,
+          "unsafe_executions": 1,
+          "safe_abstentions": 9,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.5,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 10,
+          "correct_executions": 10,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.5,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 10,
+          "correct_executions": 10,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 0
+        }
+      ]
+    },
+    "phase5_val": {
+      "dataset_id": "phase5_val",
+      "sample_size": 20,
+      "baseline": {
+        "accuracy": 0.6,
+        "false_positive_rate": 0.4,
+        "false_negative_rate": 0.0,
+        "unsafe_execution_rate": 0.4
+      },
+      "abstention_intervention": {
+        "coverage": 0.35,
+        "risk": 0.1429,
+        "selective_accuracy": 0.8571,
+        "unsafe_execution_rate": 0.05,
+        "safe_abstentions": 12,
+        "false_abstentions": 1,
+        "aurc": 0.0077
+      },
+      "risk_coverage_curve": [
+        {
+          "threshold": 0.1,
+          "coverage": 0.35,
+          "risk": 0.1429,
+          "selective_accuracy": 0.8571,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 7,
+          "correct_executions": 6,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.2,
+          "coverage": 0.35,
+          "risk": 0.1429,
+          "selective_accuracy": 0.8571,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 7,
+          "correct_executions": 6,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.3,
+          "coverage": 0.35,
+          "risk": 0.1429,
+          "selective_accuracy": 0.8571,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 7,
+          "correct_executions": 6,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.4,
+          "coverage": 0.35,
+          "risk": 0.1429,
+          "selective_accuracy": 0.8571,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 7,
+          "correct_executions": 6,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.5,
+          "coverage": 0.35,
+          "risk": 0.1429,
+          "selective_accuracy": 0.8571,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 7,
+          "correct_executions": 6,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.35,
+          "risk": 0.1429,
+          "selective_accuracy": 0.8571,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 7,
+          "correct_executions": 6,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.35,
+          "risk": 0.1429,
+          "selective_accuracy": 0.8571,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 7,
+          "correct_executions": 6,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.3,
+          "risk": 0.1667,
+          "selective_accuracy": 0.8333,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 6,
+          "correct_executions": 5,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 2
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.3,
+          "risk": 0.1667,
+          "selective_accuracy": 0.8333,
+          "unsafe_execution_rate": 0.05,
+          "executed_count": 6,
+          "correct_executions": 5,
+          "unsafe_executions": 1,
+          "safe_abstentions": 12,
+          "false_abstentions": 2
+        }
+      ]
+    },
+    "frozen_held_out": {
+      "dataset_id": "frozen_held_out",
+      "sample_size": 30,
+      "baseline": {
+        "accuracy": 0.8667,
+        "false_positive_rate": 0.1,
+        "false_negative_rate": 0.0333,
+        "unsafe_execution_rate": 0.1
+      },
+      "abstention_intervention": {
+        "coverage": 0.6333,
+        "risk": 0.0,
+        "selective_accuracy": 1.0,
+        "unsafe_execution_rate": 0.0,
+        "safe_abstentions": 10,
+        "false_abstentions": 1,
+        "aurc": 0.0
+      },
+      "risk_coverage_curve": [
+        {
+          "threshold": 0.1,
+          "coverage": 0.6333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 19,
+          "correct_executions": 19,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.2,
+          "coverage": 0.6333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 19,
+          "correct_executions": 19,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.3,
+          "coverage": 0.6333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 19,
+          "correct_executions": 19,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.4,
+          "coverage": 0.6333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 19,
+          "correct_executions": 19,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.5,
+          "coverage": 0.6333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 19,
+          "correct_executions": 19,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.6333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 19,
+          "correct_executions": 19,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.6333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 19,
+          "correct_executions": 19,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 1
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.5,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 15,
+          "correct_executions": 15,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 5
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.5,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 15,
+          "correct_executions": 15,
+          "unsafe_executions": 0,
+          "safe_abstentions": 10,
+          "false_abstentions": 5
+        }
+      ]
+    },
+    "frozen_challenge": {
+      "dataset_id": "frozen_challenge",
+      "sample_size": 25,
+      "baseline": {
+        "accuracy": 0.68,
+        "false_positive_rate": 0.24,
+        "false_negative_rate": 0.08,
+        "unsafe_execution_rate": 0.24
+      },
+      "abstention_intervention": {
+        "coverage": 0.44,
+        "risk": 0.2727,
+        "selective_accuracy": 0.7273,
+        "unsafe_execution_rate": 0.12,
+        "safe_abstentions": 8,
+        "false_abstentions": 6,
+        "aurc": 0.0154
+      },
+      "risk_coverage_curve": [
+        {
+          "threshold": 0.1,
+          "coverage": 0.44,
+          "risk": 0.2727,
+          "selective_accuracy": 0.7273,
+          "unsafe_execution_rate": 0.12,
+          "executed_count": 11,
+          "correct_executions": 8,
+          "unsafe_executions": 3,
+          "safe_abstentions": 8,
+          "false_abstentions": 6
+        },
+        {
+          "threshold": 0.2,
+          "coverage": 0.44,
+          "risk": 0.2727,
+          "selective_accuracy": 0.7273,
+          "unsafe_execution_rate": 0.12,
+          "executed_count": 11,
+          "correct_executions": 8,
+          "unsafe_executions": 3,
+          "safe_abstentions": 8,
+          "false_abstentions": 6
+        },
+        {
+          "threshold": 0.3,
+          "coverage": 0.44,
+          "risk": 0.2727,
+          "selective_accuracy": 0.7273,
+          "unsafe_execution_rate": 0.12,
+          "executed_count": 11,
+          "correct_executions": 8,
+          "unsafe_executions": 3,
+          "safe_abstentions": 8,
+          "false_abstentions": 6
+        },
+        {
+          "threshold": 0.4,
+          "coverage": 0.44,
+          "risk": 0.2727,
+          "selective_accuracy": 0.7273,
+          "unsafe_execution_rate": 0.12,
+          "executed_count": 11,
+          "correct_executions": 8,
+          "unsafe_executions": 3,
+          "safe_abstentions": 8,
+          "false_abstentions": 6
+        },
+        {
+          "threshold": 0.5,
+          "coverage": 0.44,
+          "risk": 0.2727,
+          "selective_accuracy": 0.7273,
+          "unsafe_execution_rate": 0.12,
+          "executed_count": 11,
+          "correct_executions": 8,
+          "unsafe_executions": 3,
+          "safe_abstentions": 8,
+          "false_abstentions": 6
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.44,
+          "risk": 0.2727,
+          "selective_accuracy": 0.7273,
+          "unsafe_execution_rate": 0.12,
+          "executed_count": 11,
+          "correct_executions": 8,
+          "unsafe_executions": 3,
+          "safe_abstentions": 8,
+          "false_abstentions": 6
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.44,
+          "risk": 0.2727,
+          "selective_accuracy": 0.7273,
+          "unsafe_execution_rate": 0.12,
+          "executed_count": 11,
+          "correct_executions": 8,
+          "unsafe_executions": 3,
+          "safe_abstentions": 8,
+          "false_abstentions": 6
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.36,
+          "risk": 0.1111,
+          "selective_accuracy": 0.8889,
+          "unsafe_execution_rate": 0.04,
+          "executed_count": 9,
+          "correct_executions": 8,
+          "unsafe_executions": 1,
+          "safe_abstentions": 10,
+          "false_abstentions": 6
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.36,
+          "risk": 0.1111,
+          "selective_accuracy": 0.8889,
+          "unsafe_execution_rate": 0.04,
+          "executed_count": 9,
+          "correct_executions": 8,
+          "unsafe_executions": 1,
+          "safe_abstentions": 10,
+          "false_abstentions": 6
+        }
+      ]
+    },
+    "phase5_distractors": {
+      "dataset_id": "phase5_distractors",
+      "sample_size": 20,
+      "baseline": {
+        "accuracy": 0.15,
+        "false_positive_rate": 0.85,
+        "false_negative_rate": 0.0,
+        "unsafe_execution_rate": 0.85
+      },
+      "abstention_intervention": {
+        "coverage": 0.0,
+        "risk": 0.0,
+        "selective_accuracy": 1.0,
+        "unsafe_execution_rate": 0.0,
+        "safe_abstentions": 20,
+        "false_abstentions": 0,
+        "aurc": 0.0
+      },
+      "risk_coverage_curve": [
+        {
+          "threshold": 0.1,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.2,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.3,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.4,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.5,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 20,
+          "false_abstentions": 0
+        }
+      ]
+    },
+    "phase5_ambiguity": {
+      "dataset_id": "phase5_ambiguity",
+      "sample_size": 15,
+      "baseline": {
+        "accuracy": 0.5333,
+        "false_positive_rate": 0.4667,
+        "false_negative_rate": 0.0,
+        "unsafe_execution_rate": 0.4667
+      },
+      "abstention_intervention": {
+        "coverage": 0.0,
+        "risk": 0.0,
+        "selective_accuracy": 1.0,
+        "unsafe_execution_rate": 0.0,
+        "safe_abstentions": 15,
+        "false_abstentions": 0,
+        "aurc": 0.0
+      },
+      "risk_coverage_curve": [
+        {
+          "threshold": 0.1,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.2,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.3,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.4,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.5,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.0,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 0,
+          "correct_executions": 0,
+          "unsafe_executions": 0,
+          "safe_abstentions": 15,
+          "false_abstentions": 0
+        }
+      ]
+    },
+    "phase5_adversarial": {
+      "dataset_id": "phase5_adversarial",
+      "sample_size": 15,
+      "baseline": {
+        "accuracy": 0.2667,
+        "false_positive_rate": 0.7333,
+        "false_negative_rate": 0.0,
+        "unsafe_execution_rate": 0.7333
+      },
+      "abstention_intervention": {
+        "coverage": 0.1333,
+        "risk": 1.0,
+        "selective_accuracy": 0.0,
+        "unsafe_execution_rate": 0.1333,
+        "safe_abstentions": 13,
+        "false_abstentions": 0,
+        "aurc": 0.0666
+      },
+      "risk_coverage_curve": [
+        {
+          "threshold": 0.1,
+          "coverage": 0.1333,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.1333,
+          "executed_count": 2,
+          "correct_executions": 0,
+          "unsafe_executions": 2,
+          "safe_abstentions": 13,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.2,
+          "coverage": 0.1333,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.1333,
+          "executed_count": 2,
+          "correct_executions": 0,
+          "unsafe_executions": 2,
+          "safe_abstentions": 13,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.3,
+          "coverage": 0.1333,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.1333,
+          "executed_count": 2,
+          "correct_executions": 0,
+          "unsafe_executions": 2,
+          "safe_abstentions": 13,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.4,
+          "coverage": 0.1333,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.1333,
+          "executed_count": 2,
+          "correct_executions": 0,
+          "unsafe_executions": 2,
+          "safe_abstentions": 13,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.5,
+          "coverage": 0.1333,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.1333,
+          "executed_count": 2,
+          "correct_executions": 0,
+          "unsafe_executions": 2,
+          "safe_abstentions": 13,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.1333,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.1333,
+          "executed_count": 2,
+          "correct_executions": 0,
+          "unsafe_executions": 2,
+          "safe_abstentions": 13,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.1333,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.1333,
+          "executed_count": 2,
+          "correct_executions": 0,
+          "unsafe_executions": 2,
+          "safe_abstentions": 13,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.0667,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.0667,
+          "executed_count": 1,
+          "correct_executions": 0,
+          "unsafe_executions": 1,
+          "safe_abstentions": 14,
+          "false_abstentions": 0
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.0667,
+          "risk": 1.0,
+          "selective_accuracy": 0.0,
+          "unsafe_execution_rate": 0.0667,
+          "executed_count": 1,
+          "correct_executions": 0,
+          "unsafe_executions": 1,
+          "safe_abstentions": 14,
+          "false_abstentions": 0
+        }
+      ]
+    },
+    "phase5_ood": {
+      "dataset_id": "phase5_ood",
+      "sample_size": 15,
+      "baseline": {
+        "accuracy": 0.4,
+        "false_positive_rate": 0.4,
+        "false_negative_rate": 0.2,
+        "unsafe_execution_rate": 0.4
+      },
+      "abstention_intervention": {
+        "coverage": 0.3333,
+        "risk": 0.0,
+        "selective_accuracy": 1.0,
+        "unsafe_execution_rate": 0.0,
+        "safe_abstentions": 7,
+        "false_abstentions": 3,
+        "aurc": 0.0
+      },
+      "risk_coverage_curve": [
+        {
+          "threshold": 0.1,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        },
+        {
+          "threshold": 0.2,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        },
+        {
+          "threshold": 0.3,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        },
+        {
+          "threshold": 0.4,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        },
+        {
+          "threshold": 0.5,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.3333,
+          "risk": 0.0,
+          "selective_accuracy": 1.0,
+          "unsafe_execution_rate": 0.0,
+          "executed_count": 5,
+          "correct_executions": 5,
+          "unsafe_executions": 0,
+          "safe_abstentions": 7,
+          "false_abstentions": 3
+        }
+      ]
+    }
+  },
+  "distractors_fpr_reduction": {
+    "baseline_fpr": 0.85,
+    "abstention_fpr": 0.0
+  },
+  "matched_pairs_gain": {
+    "baseline_accuracy": 0.0,
+    "abstention_accuracy": 0.5
+  }
+}

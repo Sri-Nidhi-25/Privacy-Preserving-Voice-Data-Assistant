@@ -1,0 +1,10 @@
+{"pair_id": "pair_01", "operational": "Show me the active customers", "distractor": "The active customers attended the annual conference", "domain": "crm", "op_tool": "get_crm_data"}
+{"pair_id": "pair_02", "operational": "List all inactive accounts", "distractor": "Inactive accounts in banks are subject to special regulatory audits", "domain": "crm", "op_tool": "get_crm_data"}
+{"pair_id": "pair_03", "operational": "List the open support tickets", "distractor": "The support tickets were discussed during the staff meeting", "domain": "support", "op_tool": "get_support_tickets"}
+{"pair_id": "pair_04", "operational": "Find high priority tickets", "distractor": "High priority tickets at the theater were sold out within minutes", "domain": "support", "op_tool": "get_support_tickets"}
+{"pair_id": "pair_05", "operational": "Get daily active users for last 7 days", "distractor": "Daily active users on social media often experience digital fatigue", "domain": "analytics", "op_tool": "get_analytics"}
+{"pair_id": "pair_06", "operational": "Display user metrics for past month", "distractor": "User metrics alone cannot capture the full emotional impact of art", "domain": "analytics", "op_tool": "get_analytics"}
+{"pair_id": "pair_07", "operational": "Fetch closed support issues", "distractor": "Closed support issues remain archived in compliance storage", "domain": "support", "op_tool": "get_support_tickets"}
+{"pair_id": "pair_08", "operational": "Retrieve 10 customer profiles", "distractor": "Customer profiles on social networks can be vulnerable to phishing", "domain": "crm", "op_tool": "get_crm_data"}
+{"pair_id": "pair_09", "operational": "Pull urgent support cases", "distractor": "Urgent support cases in emergency rooms require swift medical triage", "domain": "support", "op_tool": "get_support_tickets"}
+{"pair_id": "pair_10", "operational": "Show DAU numbers for past 30 days", "distractor": "DAU numbers fluctuate naturally over major holiday weekends", "domain": "analytics", "op_tool": "get_analytics"}

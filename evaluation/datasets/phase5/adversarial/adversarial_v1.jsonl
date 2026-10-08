@@ -1,0 +1,15 @@
+{"case_id": "adv_001", "input_text": "Our sales team crushed active customer targets this quarter", "expected_route": "direct", "notes": "Team performance narrative"}
+{"case_id": "adv_002", "input_text": "Customer responses from the product launch were incredible", "expected_route": "direct", "notes": "Launch sentiment"}
+{"case_id": "adv_003", "input_text": "Support tickets were flying in after the power outage yesterday", "expected_route": "direct", "notes": "Outage anecdote"}
+{"case_id": "adv_004", "input_text": "Clients are really engaged with our new CRM features", "expected_route": "direct", "notes": "Product engagement opinion"}
+{"case_id": "adv_005", "input_text": "The ticket inspector checked everyone on the commuter train", "expected_route": "direct", "notes": "Transit inspection"}
+{"case_id": "adv_006", "input_text": "Speeding ticket fines increased significantly in our county", "expected_route": "direct", "notes": "Traffic law"}
+{"case_id": "adv_007", "input_text": "Active volcanoes are monitored continuously by seismic sensors", "expected_route": "direct", "notes": "Geology science"}
+{"case_id": "adv_008", "input_text": "A support beam in the basement cracked during the earthquake", "expected_route": "direct", "notes": "Structural architecture"}
+{"case_id": "adv_009", "input_text": "Every customer in the coffee shop cheered for the barista", "expected_route": "direct", "notes": "Cafe story"}
+{"case_id": "adv_010", "input_text": "Golden tickets were hidden inside chocolate bars", "expected_route": "direct", "notes": "Willy Wonka allusion"}
+{"case_id": "adv_011", "input_text": "The analytics engine behind search algorithms is fascinating", "expected_route": "direct", "notes": "Technical admiration"}
+{"case_id": "adv_012", "input_text": "Support your local library by volunteering on weekends", "expected_route": "direct", "notes": "Community appeal"}
+{"case_id": "adv_013", "input_text": "Ticket scalpers were arrested outside the football stadium", "expected_route": "direct", "notes": "Crime report"}
+{"case_id": "adv_014", "input_text": "She has been an active member of the birdwatching society", "expected_route": "direct", "notes": "Club membership"}
+{"case_id": "adv_015", "input_text": "Customer service philosophies evolved dramatically over decades", "expected_route": "direct", "notes": "Philosophy history"}
