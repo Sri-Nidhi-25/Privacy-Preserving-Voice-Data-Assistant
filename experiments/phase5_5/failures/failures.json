@@ -1,0 +1,224 @@
+[
+  {
+    "case_id": "e2e_clean_001",
+    "input_text": "Show me the top five active customers",
+    "dataset": "clean_operational",
+    "condition": "clean",
+    "injection_type": null,
+    "expected": {
+      "should_execute": true,
+      "expected_route": "tool",
+      "expected_tool": "get_crm_data",
+      "expected_arguments": {
+        "status": "active",
+        "limit": 5
+      }
+    },
+    "audio": {
+      "duration_seconds": 3.24,
+      "condition": "clean"
+    },
+    "stt": {
+      "transcript": "Show me the top five active customers.",
+      "wer": 0.0,
+      "cer": 0.0,
+      "avg_logprob": -0.324,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 0.905,
+      "low_confidence_abstain": false
+    },
+    "correction": {
+      "corrected_transcript": "Show me the top five active customers.",
+      "changed": false,
+      "correction_accepted": false,
+      "decision": "KEEP_RAW"
+    },
+    "routing": {
+      "intent": "unknown",
+      "route": "direct"
+    },
+    "abstention": {
+      "decision": "EXECUTE",
+      "reason": null,
+      "confidence": 1.0,
+      "execution_prevented": false
+    },
+    "tool": {
+      "selected": null,
+      "arguments": {},
+      "validation_error": null
+    },
+    "execution": {
+      "executed": false,
+      "connector_success": true,
+      "connector_error": null,
+      "retry_succeeded": false,
+      "result_count": 0
+    },
+    "answer_text": "Sorry, I am currently unable to process your request with the language model.",
+    "latency_ms": {
+      "validation": 11,
+      "obfuscation": 1127,
+      "stt": 11295,
+      "correction": 32906,
+      "routing": 0,
+      "abstention": 0,
+      "tool": 0,
+      "tts": 120,
+      "total": 76282
+    },
+    "failure": {
+      "stage": "ROUTING",
+      "code": "INTENT_MISCLASSIFICATION",
+      "explanation": "Expected CRM intent, got unknown."
+    }
+  },
+  {
+    "case_id": "e2e_clean_002",
+    "input_text": "List all inactive accounts",
+    "dataset": "clean_operational",
+    "condition": "clean",
+    "injection_type": null,
+    "expected": {
+      "should_execute": true,
+      "expected_route": "tool",
+      "expected_tool": "get_crm_data",
+      "expected_arguments": {
+        "status": "inactive"
+      }
+    },
+    "audio": {
+      "duration_seconds": 2.66,
+      "condition": "clean"
+    },
+    "stt": {
+      "transcript": "List all inactive accounts.",
+      "wer": 0.0,
+      "cer": 0.0,
+      "avg_logprob": -0.308,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 0.771,
+      "low_confidence_abstain": false
+    },
+    "correction": {
+      "corrected_transcript": "List all inactive accounts.",
+      "changed": false,
+      "correction_accepted": false,
+      "decision": "KEEP_RAW"
+    },
+    "routing": {
+      "intent": "unknown",
+      "route": "direct"
+    },
+    "abstention": {
+      "decision": "EXECUTE",
+      "reason": null,
+      "confidence": 1.0,
+      "execution_prevented": false
+    },
+    "tool": {
+      "selected": null,
+      "arguments": {},
+      "validation_error": null
+    },
+    "execution": {
+      "executed": false,
+      "connector_success": true,
+      "connector_error": null,
+      "retry_succeeded": false,
+      "result_count": 0
+    },
+    "answer_text": "Sorry, I am currently unable to process your request with the language model.",
+    "latency_ms": {
+      "validation": 13,
+      "obfuscation": 1038,
+      "stt": 19100,
+      "correction": 30516,
+      "routing": 0,
+      "abstention": 0,
+      "tool": 0,
+      "tts": 120,
+      "total": 82716
+    },
+    "failure": {
+      "stage": "ROUTING",
+      "code": "INTENT_MISCLASSIFICATION",
+      "explanation": "Expected CRM intent, got unknown."
+    }
+  },
+  {
+    "case_id": "e2e_clean_003",
+    "input_text": "Show me the open support tickets",
+    "dataset": "clean_operational",
+    "condition": "clean",
+    "injection_type": null,
+    "expected": {
+      "should_execute": true,
+      "expected_route": "tool",
+      "expected_tool": "get_support_tickets",
+      "expected_arguments": {
+        "status": "open"
+      }
+    },
+    "audio": {
+      "duration_seconds": 2.93,
+      "condition": "clean"
+    },
+    "stt": {
+      "transcript": "Show me the open support tickets.",
+      "wer": 0.0,
+      "cer": 0.0,
+      "avg_logprob": -0.368,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 0.805,
+      "low_confidence_abstain": false
+    },
+    "correction": {
+      "corrected_transcript": "Show me the open tickets.",
+      "changed": true,
+      "correction_accepted": true,
+      "decision": "ACCEPT_CORRECTION"
+    },
+    "routing": {
+      "intent": "SUPPORT_QUERY",
+      "route": "tool"
+    },
+    "abstention": {
+      "decision": "EXECUTE",
+      "reason": "High domain and operational evidence; tool execution authorized.",
+      "confidence": 1.0,
+      "execution_prevented": false
+    },
+    "tool": {
+      "selected": "get_support_tickets",
+      "arguments": {
+        "status": "open"
+      },
+      "validation_error": null
+    },
+    "execution": {
+      "executed": true,
+      "connector_success": true,
+      "connector_error": null,
+      "retry_succeeded": false,
+      "result_count": 25
+    },
+    "answer_text": "25 records found. Showing first 10.",
+    "latency_ms": {
+      "validation": 84,
+      "obfuscation": 2497,
+      "stt": 27935,
+      "correction": 19073,
+      "routing": 8,
+      "abstention": 8,
+      "tool": 3637,
+      "tts": 120,
+      "total": 53248
+    },
+    "failure": {
+      "stage": "ROUTING",
+      "code": "INTENT_MISCLASSIFICATION",
+      "explanation": "Expected Support intent, got SUPPORT_QUERY."
+    }
+  }
+]

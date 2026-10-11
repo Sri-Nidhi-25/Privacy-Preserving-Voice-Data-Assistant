@@ -1,6 +1,7 @@
 import ollama
 import json
 import re
+import time
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from app.connectors.crm_connector import CRMConnector
@@ -205,6 +206,7 @@ SCHEMA = {
 
 # Entity-grounded intent routing
 from app.services.intent_router import is_data_query, classify_intent, Intent
+from app.services.abstention_router import evaluate_abstention, Decision
 
 # Preserved for backward compatibility
 DATA_KEYWORDS = [
@@ -464,10 +466,12 @@ class LLMOrchestrator:
         }
         return " ".join(answers), metadata
 
-    def process_query(self, user_text: str) -> dict:
+    def process_query(self, user_text: str, enable_abstention: bool = True) -> dict:
         # --- Correction pass: fix likely STT garbling against known domain
         # vocabulary before any routing decision is made. ---
+        t_corr_start = time.perf_counter()
         corr = correct_transcript(user_text, self.model, client=self.client)
+        corr_latency_ms = int((time.perf_counter() - t_corr_start) * 1000)
         corrected_text = corr["text"]
 
         def _apply_corr_meta(meta: dict) -> dict:
@@ -479,6 +483,7 @@ class LLMOrchestrator:
             meta["correction_rejected"] = corr["correction_rejected"]
             meta["fallback_used"] = corr["fallback_used"]
             meta["transcript_was_corrected"] = corr["correction_changed"]
+            meta["correction_latency_ms"] = corr_latency_ms
             if "decision" in corr:
                 meta["correction_decision"] = corr["decision"]
             if corr.get("rejection_reason"):
@@ -486,24 +491,107 @@ class LLMOrchestrator:
             return meta
 
         try:
-            intent_res = classify_intent(corrected_text)
-            detected_intent = intent_res.intent
+            t_rout_start = time.perf_counter()
+            abstention_latency_ms = 0
 
-            if intent_res.route != "tool":
-                response = self.client.chat(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": corrected_text + " (Answer directly, no tools or APIs.)"}
-                    ],
-                )
-                metadata = _apply_corr_meta(_empty_metadata())
-                metadata["classified_intent"] = detected_intent.value
-                return {
-                    "answer": response["message"]["content"],
-                    "metadata": metadata
+            if enable_abstention:
+                abs_res = evaluate_abstention(corrected_text, threshold=0.50)
+                abstention_latency_ms = int((time.perf_counter() - t_rout_start) * 1000)
+                routing_latency_ms = abstention_latency_ms
+                detected_intent = abs_res.intent
+
+                # Check if selective abstention withheld tool execution
+                if abs_res.decision == Decision.ABSTAIN:
+                    metadata = _apply_corr_meta(_empty_metadata())
+                    metadata.update({
+                        "classified_intent": detected_intent.value,
+                        "abstention_decision": "ABSTAIN",
+                        "abstention_reason": abs_res.reason,
+                        "abstention_confidence": abs_res.confidence,
+                        "execution_prevented_by_abstention": True,
+                        "correction_latency_ms": corr_latency_ms,
+                        "routing_latency_ms": routing_latency_ms,
+                        "abstention_latency_ms": abstention_latency_ms,
+                        "tool_latency_ms": 0,
+                    })
+                    answer = f"I cannot run a data query for this request: {abs_res.reason}"
+                    return {
+                        "answer": answer,
+                        "metadata": metadata
+                    }
+
+                if abs_res.decision == Decision.DIRECT:
+                    # Non-domain query, direct conversation without tools
+                    t_llm_start = time.perf_counter()
+                    response = self.client.chat(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": SYSTEM_PROMPT},
+                            {"role": "user", "content": corrected_text + " (Answer directly, no tools or APIs.)"}
+                        ],
+                    )
+                    metadata = _apply_corr_meta(_empty_metadata())
+                    metadata.update({
+                        "classified_intent": detected_intent.value,
+                        "abstention_decision": "DIRECT",
+                        "abstention_reason": abs_res.reason,
+                        "abstention_confidence": abs_res.confidence,
+                        "execution_prevented_by_abstention": False,
+                        "correction_latency_ms": corr_latency_ms,
+                        "routing_latency_ms": routing_latency_ms,
+                        "abstention_latency_ms": abstention_latency_ms,
+                        "tool_latency_ms": 0,
+                    })
+                    return {
+                        "answer": response["message"]["content"],
+                        "metadata": metadata
+                    }
+
+                # Decision is EXECUTE
+                abs_meta = {
+                    "abstention_decision": "EXECUTE",
+                    "abstention_reason": abs_res.reason,
+                    "abstention_confidence": abs_res.confidence,
+                    "execution_prevented_by_abstention": False,
+                    "abstention_latency_ms": abstention_latency_ms,
+                }
+            else:
+                # Baseline Phase 4.6 routing without abstention
+                intent_res = classify_intent(corrected_text)
+                routing_latency_ms = int((time.perf_counter() - t_rout_start) * 1000)
+                detected_intent = intent_res.intent
+                should_execute_tool = (intent_res.route == "tool")
+                abs_meta = {
+                    "abstention_decision": "BASELINE_NO_ABSTENTION",
+                    "abstention_reason": "Selective abstention disabled (Baseline mode).",
+                    "abstention_confidence": 1.0,
+                    "execution_prevented_by_abstention": False,
+                    "abstention_latency_ms": 0,
                 }
 
+                if not should_execute_tool:
+                    response = self.client.chat(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": SYSTEM_PROMPT},
+                            {"role": "user", "content": corrected_text + " (Answer directly, no tools or APIs.)"}
+                        ],
+                    )
+                    metadata = _apply_corr_meta(_empty_metadata())
+                    metadata.update(abs_meta)
+                    metadata.update({
+                        "classified_intent": detected_intent.value,
+                        "correction_latency_ms": corr_latency_ms,
+                        "routing_latency_ms": routing_latency_ms,
+                        "tool_latency_ms": 0,
+                    })
+                    return {
+                        "answer": response["message"]["content"],
+                        "metadata": metadata
+                    }
+
+            # Authorized to execute tools
+            t_tool_start = time.perf_counter()
             response = self.client.chat(
                 model=self.model,
                 messages=[
@@ -517,7 +605,12 @@ class LLMOrchestrator:
 
             if tool_calls:
                 answer, metadata = self._execute_tool_calls(tool_calls, detected_intent=detected_intent)
+                tool_latency_ms = int((time.perf_counter() - t_tool_start) * 1000)
+                metadata.update(abs_meta)
                 metadata["classified_intent"] = detected_intent.value
+                metadata["correction_latency_ms"] = corr_latency_ms
+                metadata["routing_latency_ms"] = routing_latency_ms
+                metadata["tool_latency_ms"] = tool_latency_ms
                 return {"answer": answer, "metadata": _apply_corr_meta(metadata)}
 
             content = message.get("content", "")
@@ -528,11 +621,21 @@ class LLMOrchestrator:
                     for c in extracted_calls
                 ]
                 answer, metadata = self._execute_tool_calls(synthetic_calls, detected_intent=detected_intent)
+                tool_latency_ms = int((time.perf_counter() - t_tool_start) * 1000)
+                metadata.update(abs_meta)
                 metadata["classified_intent"] = detected_intent.value
+                metadata["correction_latency_ms"] = corr_latency_ms
+                metadata["routing_latency_ms"] = routing_latency_ms
+                metadata["tool_latency_ms"] = tool_latency_ms
                 return {"answer": answer, "metadata": _apply_corr_meta(metadata)}
 
+            tool_latency_ms = int((time.perf_counter() - t_tool_start) * 1000)
             metadata = _apply_corr_meta(_empty_metadata())
+            metadata.update(abs_meta)
             metadata["classified_intent"] = detected_intent.value
+            metadata["correction_latency_ms"] = corr_latency_ms
+            metadata["routing_latency_ms"] = routing_latency_ms
+            metadata["tool_latency_ms"] = tool_latency_ms
             return {
                 "answer": content if content else "I didn't understand that query.",
                 "metadata": metadata
@@ -540,6 +643,7 @@ class LLMOrchestrator:
         except Exception as exc:
             metadata = _apply_corr_meta(_empty_metadata())
             metadata["llm_error"] = str(exc)
+            metadata["failure_type"] = "orchestrator_exception"
             return {
                 "answer": "Sorry, I am currently unable to process your request with the language model.",
                 "metadata": metadata,

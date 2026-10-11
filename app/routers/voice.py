@@ -1,4 +1,4 @@
-﻿"""
+"""
 app/routers/voice.py - Voice query router with observability, failure handling,
 and guaranteed resource cleanup.
 """
@@ -101,6 +101,7 @@ async def _synthesize_and_verify(text: str, output_path: Path) -> None:
 async def voice_query(
     audio_file: UploadFile = File(...),
     api_key: str = Header(...),
+    enable_abstention: bool = True,
     background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     request_id = str(uuid.uuid4())
@@ -228,10 +229,20 @@ async def voice_query(
 
         # 5. LLM Orchestration & Tool Execution
         t_orch_start = time.perf_counter()
-        orchestrator_result = orchestrator.process_query(user_text)
+        orchestrator_result = orchestrator.process_query(user_text, enable_abstention=enable_abstention)
         latency_ms["orchestrator"] = int((time.perf_counter() - t_orch_start) * 1000)
         answer_text = orchestrator_result["answer"]
         metadata = orchestrator_result["metadata"]
+
+        # Merge sub-stage latencies into latency_ms
+        if "correction_latency_ms" in metadata:
+            latency_ms["correction"] = metadata["correction_latency_ms"]
+        if "routing_latency_ms" in metadata:
+            latency_ms["routing"] = metadata["routing_latency_ms"]
+        if "abstention_latency_ms" in metadata:
+            latency_ms["abstention"] = metadata["abstention_latency_ms"]
+        if "tool_latency_ms" in metadata:
+            latency_ms["tool"] = metadata["tool_latency_ms"]
 
         log_event(
             logger,
