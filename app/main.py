@@ -73,3 +73,9 @@ def serve_chat_ui():
     entirely.
     """
     return FileResponse(CHAT_UI_PATH)
+ 
+ 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    from fastapi.responses import Response
+    return Response(status_code=204)

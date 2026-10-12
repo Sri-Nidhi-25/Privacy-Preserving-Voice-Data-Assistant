@@ -6,7 +6,14 @@ import whisper
 
 class STTEngine:
     def __init__(self, model_name: str = "base"):
-        self.model: Any = whisper.load_model(model_name)
+        self.model_name = model_name
+        self._model: Any = None
+
+    @property
+    def model(self) -> Any:
+        if self._model is None:
+            self._model = whisper.load_model(self.model_name)
+        return self._model
 
     def transcribe(self, audio_path: Path) -> str:
         """Backwards-compatible: text only, no confidence info."""

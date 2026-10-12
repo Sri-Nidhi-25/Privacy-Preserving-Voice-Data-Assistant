@@ -112,7 +112,6 @@ Ensure your `.env` contains your desired `API_KEY` and settings.
 ### 3. Run FastAPI Service
 ```bash
 .\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 Open `http://127.0.0.1:8000/` in your browser to interact with the voice client.
 
