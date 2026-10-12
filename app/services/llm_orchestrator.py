@@ -18,6 +18,8 @@ SYSTEM_PROMPT = (
     "function via the provided tool-calling interface. Do NOT output JSON "
     "or code blocks – use the tool-calling mechanism directly. "
     "ONLY use a tool if the user explicitly asks about customers, tickets, or metrics. "
+    "If a question involves both customers and tickets (e.g., 'How many inactive customers have open high priority tickets?'), "
+    "you can and should call MULTIPLE tools: call get_crm_data with the customer filters, and call get_support_tickets with the ticket filters. "
     "For general questions (like capital cities, jokes, weather), answer directly without tools. "
     "Always use the tool‑calling interface – never output JSON manually."
 )
@@ -351,12 +353,14 @@ class LLMOrchestrator:
             Intent.CRM_QUERY: ["get_crm_data"],
             Intent.SUPPORT_QUERY: ["get_support_tickets"],
             Intent.ANALYTICS_QUERY: ["get_analytics"],
+            Intent.MULTI_DOMAIN_QUERY: ["get_crm_data", "get_support_tickets", "get_analytics"],
         }
 
         answers = []
         sources_used = []
         total_results = 0
         call_log = []
+        collected_data_by_tool = {}
         source_timestamps = []
         latest_freshness_status = "unknown"
         freshness_warnings = []
@@ -427,6 +431,8 @@ class LLMOrchestrator:
                 return f"Sorry, could not retrieve data from {func_name}: {conn_result.error}", err_meta
 
             raw_data = conn_result.data
+            collected_data_by_tool[func_name] = raw_data
+
             if conn_result.source_last_updated:
                 source_timestamps.append(conn_result.source_last_updated)
             if conn_result.freshness_status != "unknown":
@@ -449,6 +455,19 @@ class LLMOrchestrator:
         if not answers:
             return "Sorry, I couldn't find the right data source.", _empty_metadata()
 
+        # Cross-domain correlation synthesis: if both CRM and Support data were retrieved, perform join
+        final_answer_text = " ".join(answers)
+        if "get_crm_data" in collected_data_by_tool and "get_support_tickets" in collected_data_by_tool:
+            c_data = collected_data_by_tool["get_crm_data"]
+            s_data = collected_data_by_tool["get_support_tickets"]
+            c_ids = {c.get("customer_id") for c in c_data if "customer_id" in c}
+            correlated_tickets = [t for t in s_data if t.get("customer_id") in c_ids]
+            unique_customers_with_tickets = {t.get("customer_id") for t in correlated_tickets}
+            final_answer_text = (
+                f"Across {len(c_data)} matching customers and {len(s_data)} tickets, "
+                f"there are {len(correlated_tickets)} tickets belonging to {len(unique_customers_with_tickets)} of those customers."
+            )
+
         source_last_updated = max(source_timestamps) if source_timestamps else "unknown"
         now_iso = datetime.now(timezone.utc).isoformat()
         metadata = {
@@ -464,7 +483,7 @@ class LLMOrchestrator:
             "retry_count": overall_retry_count,
             "retry_succeeded": overall_retry_succeeded,
         }
-        return " ".join(answers), metadata
+        return final_answer_text, metadata
 
     def process_query(self, user_text: str, enable_abstention: bool = True) -> dict:
         # --- Correction pass: fix likely STT garbling against known domain

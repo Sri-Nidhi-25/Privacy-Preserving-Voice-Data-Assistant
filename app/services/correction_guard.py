@@ -102,10 +102,16 @@ def validate_correction(raw: str, corrected: str) -> Tuple[bool, Optional[str]]:
         if word_a in raw_tokens and word_b not in raw_tokens:
             if word_b in corr_tokens:
                 return False, f"intent_inversion_{word_a}_to_{word_b}"
+            # Also ensure the critical filter keyword was not dropped entirely
+            if word_a not in corr_tokens:
+                return False, f"dropped_filter_term_{word_a}"
         # If raw had word_b and not word_a, corrected should not have word_a
         if word_b in raw_tokens and word_a not in raw_tokens:
             if word_a in corr_tokens:
                 return False, f"intent_inversion_{word_b}_to_{word_a}"
+            # Also ensure the critical filter keyword was not dropped entirely
+            if word_b not in corr_tokens:
+                return False, f"dropped_filter_term_{word_b}"
 
     return True, None
 

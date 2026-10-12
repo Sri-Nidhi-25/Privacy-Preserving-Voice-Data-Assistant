@@ -125,21 +125,36 @@ def evaluate_abstention(text: str, threshold: float = 0.50) -> AbstentionResult:
             reason="No domain entities present; standard direct response.",
         )
 
-    # Step 5: Multi-domain ambiguity
+    # Step 5: Multi-domain handling
     if len(matched_domains) > 1 and not distractor_penalty:
-        # Cross-domain ambiguity detected
-        return AbstentionResult(
-            intent=Intent.AMBIGUOUS,
-            route="abstain",
-            decision=Decision.ABSTAIN,
-            confidence=0.30,
-            domain_evidence=domain_evidence,
-            operational_evidence=operational_evidence,
-            distractor_penalty=distractor_penalty,
-            target_tool=None,
-            matched_domains=matched_domains,
-            reason=f"Multiple conflicting domain entities detected: {matched_domains}.",
-        )
+        if operational_evidence >= 0.5:
+            # Genuine cross-domain operational request (e.g. correlating CRM and Support)
+            return AbstentionResult(
+                intent=Intent.MULTI_DOMAIN_QUERY,
+                route="tool",
+                decision=Decision.EXECUTE,
+                confidence=min(1.0, domain_evidence * 0.40 + operational_evidence * 0.60),
+                domain_evidence=domain_evidence,
+                operational_evidence=operational_evidence,
+                distractor_penalty=distractor_penalty,
+                target_tool=None,
+                matched_domains=matched_domains,
+                reason=f"Cross-domain operational query correlating multiple entities: {matched_domains}.",
+            )
+        else:
+            # Unfocused cross-domain mention without clear operational directive
+            return AbstentionResult(
+                intent=Intent.AMBIGUOUS,
+                route="abstain",
+                decision=Decision.ABSTAIN,
+                confidence=0.30,
+                domain_evidence=domain_evidence,
+                operational_evidence=operational_evidence,
+                distractor_penalty=distractor_penalty,
+                target_tool=None,
+                matched_domains=matched_domains,
+                reason=f"Multiple conflicting domain entities detected without clear operational query: {matched_domains}.",
+            )
 
     # Step 6: Map primary domain target
     target_tool = None

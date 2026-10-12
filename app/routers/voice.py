@@ -34,6 +34,8 @@ ALLOWED_CONTENT_TYPES = {
     "audio/mp3",
     "audio/webm",
     "audio/ogg",
+    "video/mpeg",
+    "audio/mp4",
 }
 MAX_FILE_SIZE = settings.MAX_AUDIO_SIZE_MB * 1024 * 1024
 AUDIO_DIR = Path("temp_audio")
@@ -133,6 +135,8 @@ async def voice_query(
         "audio/mp3": ".mp3",
         "audio/webm": ".webm",
         "audio/ogg": ".ogg",
+        "video/mpeg": ".mpeg",
+        "audio/mp4": ".m4a",
     }
     suffix = suffix_map.get(audio_file.content_type, ".wav")
 
