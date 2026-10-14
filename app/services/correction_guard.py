@@ -113,6 +113,11 @@ def validate_correction(raw: str, corrected: str) -> Tuple[bool, Optional[str]]:
             if word_b not in corr_tokens:
                 return False, f"dropped_filter_term_{word_b}"
 
+    # 6. Cross-domain entity preservation (prevent replacing 'users' with 'customers', etc.)
+    if ("user" in raw_tokens or "users" in raw_tokens) and not ("customer" in raw_tokens or "customers" in raw_tokens):
+        if "customer" in corr_tokens or "customers" in corr_tokens:
+            return False, "domain_entity_swap_users_to_customers"
+
     return True, None
 
 
