@@ -245,6 +245,8 @@
   .badge-abstain { background: #d29922; color: #000; }
   .badge-direct { background: #1f6feb; color: #fff; }
   .badge-intent { background: #30363d; color: #c9d1d9; }
+  .badge-source-mic { background: #da3633; color: #fff; }
+  .badge-source-file { background: #1f6feb; color: #fff; }
 
   .turn-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
   
@@ -508,7 +510,7 @@ async function toggleRecording() {
     mediaRecorder.onstop = () => {
       const blob = new Blob(recordedChunks, { type: 'audio/webm' });
       showAudioPreview(blob);
-      sendAudio(blob, 'recording.webm');
+      sendAudio(blob, 'microphone_recording.webm', 'Live Microphone');
     };
 
     mediaRecorder.start();
@@ -540,11 +542,11 @@ uploadBtn.addEventListener('click', () => {
     return;
   }
   showAudioPreview(file);
-  sendAudio(file, file.name);
+  sendAudio(file, file.name, 'Uploaded Audio File');
 });
 
 // Pipeline Execution Request
-async function sendAudio(blobOrFile, filename) {
+async function sendAudio(blobOrFile, filename, sourceLabel) {
   setSimulatedPipelineActive();
   statusBar.textContent = 'Processing through voice pipeline...';
   statusBar.classList.remove('error');
@@ -575,7 +577,7 @@ async function sendAudio(blobOrFile, filename) {
     const data = await res.json();
     finalizeStageTracker(data.metadata || {});
     statusBar.textContent = `Completed in ${Math.round(performance.now() - tStart)} ms`;
-    renderTurn(data, apiUrl);
+    renderTurn(data, apiUrl, filename, sourceLabel);
   } catch (err) {
     statusBar.textContent = 'Pipeline Failure: ' + err.message;
     statusBar.classList.add('error');
@@ -584,7 +586,7 @@ async function sendAudio(blobOrFile, filename) {
 }
 
 // Render Turn Output
-function renderTurn(data, apiUrl) {
+function renderTurn(data, apiUrl, filename, sourceLabel) {
   const meta = data.metadata || {};
   const latencies = meta.latency_ms || {};
   const base = apiUrl.split('/voice/query')[0];
@@ -594,6 +596,10 @@ function renderTurn(data, apiUrl) {
   if (dec === 'EXECUTE') badgeClass = 'badge-execute';
   if (dec === 'ABSTAIN') badgeClass = 'badge-abstain';
 
+  const isLiveMic = (sourceLabel || '').toLowerCase().includes('microphone');
+  const sourceBadgeClass = isLiveMic ? 'badge-source-mic' : 'badge-source-file';
+  const sourceIcon = isLiveMic ? '🎤' : '📁';
+
   const turn = document.createElement('div');
   turn.className = 'turn-card';
 
@@ -601,11 +607,25 @@ function renderTurn(data, apiUrl) {
     <div class="turn-header">
       <span class="req-id">REQ: ${escapeHtml(meta.request_id || 'unknown')}</span>
       <div class="badges">
+        <span class="badge ${sourceBadgeClass}">${sourceIcon} ${escapeHtml(sourceLabel || 'Audio Input')}</span>
         <span class="badge badge-intent">${escapeHtml(meta.classified_intent || 'UNKNOWN')}</span>
         <span class="badge ${badgeClass}">${dec}</span>
       </div>
     </div>
     <div class="turn-body">
+      <!-- Input Source & File Name -->
+      <div class="section-row">
+        <span class="label">Input Audio Source</span>
+        <div class="transcript-box" style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem;">
+          <div>
+            <b>Source Mode:</b> <span style="color:#58a6ff;">${escapeHtml(sourceLabel || 'Audio Input')}</span>
+          </div>
+          <div>
+            <b>File Name:</b> <span style="font-family:monospace; color:#f0883e;">${escapeHtml(filename || 'unknown')}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Transcripts -->
       <div class="section-row">
         <span class="label">Speech Recognition (Whisper &rarr; Correction)</span>
