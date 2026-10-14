@@ -256,10 +256,16 @@ def _coerce_args(func_name: str, args: dict) -> dict:
     coerced = dict(args)
     for key, value in list(coerced.items()):
         prop = schema["properties"].get(key)
-        if prop and prop["type"] == "integer" and isinstance(value, str):
-            stripped = value.strip()
-            if stripped.lstrip("-").isdigit():
-                coerced[key] = int(stripped)
+        if prop and prop["type"] == "integer":
+            if isinstance(value, str):
+                stripped = value.strip().lower()
+                if stripped.lstrip("-").isdigit():
+                    coerced[key] = int(stripped)
+                elif stripped in ("all", "none", "null", "no limit", "unlimited", "max"):
+                    # The user asked for "all" records, so drop the explicit limit parameter
+                    coerced.pop(key, None)
+            elif value is None:
+                coerced.pop(key, None)
     return coerced
 
 
