@@ -45,7 +45,7 @@ class AbstentionResult:
 # 1. Domain Entities
 CRM_ENTITIES = re.compile(r"\b(customer|customers|crm|client|clients|account|accounts|roster|patron|patrons)\b", re.IGNORECASE)
 SUPPORT_ENTITIES = re.compile(r"\b(ticket|tickets|support\s+tickets?|support\s+issue|support\s+issues|support\s+cases?|support\s+queue|helpdesk|grievance|grievances)\b", re.IGNORECASE)
-ANALYTICS_ENTITIES = re.compile(r"\b(daily\s+active\s+users?|dau|analytics|user\s+metrics?|metrics?\s+trend|metric|engagement|retention)\b", re.IGNORECASE)
+ANALYTICS_ENTITIES = re.compile(r"\b(daily\s+active\s+users?|dau|analytics|user\s+metrics?|metrics?\s+trend|metric|engagement|retention|active\s+users?(\s+daily)?)\b", re.IGNORECASE)
 
 # 2. Operational Directives & Modalities
 OPERATIONAL_DIRECTIVES = re.compile(
@@ -53,7 +53,7 @@ OPERATIONAL_DIRECTIVES = re.compile(
     re.IGNORECASE
 )
 OPERATIONAL_INTERROGATIVES = re.compile(
-    r"\b(how\s+many|are\s+there\s+(any)?|can\s+you\s+(show|list|get|fetch|pull|retrieve|find)|could\s+you\s+(show|list|get|fetch|pull)|what\s+is\s+our\s+(current\s+)?(daily\s+active\s+user|dau|count))\b",
+    r"\b(how\s+many|are\s+there\s+(any)?|can\s+you\s+(show|list|get|fetch|pull|retrieve|find)|could\s+you\s+(show|list|get|fetch|pull)|what\s+is\s+our\s+(current\s+)?(daily\s+active\s+user|dau|count)|what('s|\s+is)\s+(the\s+)?(average|total|current|count))\b",
     re.IGNORECASE
 )
 OPERATIONAL_FILTERS = re.compile(

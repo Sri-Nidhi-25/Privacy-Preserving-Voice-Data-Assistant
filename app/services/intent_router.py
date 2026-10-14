@@ -60,7 +60,7 @@ SUPPORT_PATTERNS = [
 ]
 
 ANALYTICS_PATTERNS = [
-    re.compile(r"\b(daily\s+active\s+users?|dau|analytics(\s+data)?|user\s+metrics?|metrics?\s+trend|metric(\s+for|\s+of)?\s+users?|average\s+metric|engagement(\s+data|\s+metrics?|\s+numbers?)?|metrics\b)", re.IGNORECASE),
+    re.compile(r"\b(daily\s+active\s+users?|dau|analytics(\s+data)?|user\s+metrics?|metrics?\s+trend|metric(\s+for|\s+of)?\s+users?|average\s+metric|engagement(\s+data|\s+metrics?|\s+numbers?)?|metrics\b|active\s+users?(\s+daily)?)\b", re.IGNORECASE),
 ]
 
 # Supporting filter or action markers that strengthen domain intent
