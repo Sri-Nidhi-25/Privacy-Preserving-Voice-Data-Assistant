@@ -260,10 +260,18 @@ def _coerce_args(func_name: str, args: dict) -> dict:
             if isinstance(value, str):
                 stripped = value.strip().lower()
                 if stripped.lstrip("-").isdigit():
-                    coerced[key] = int(stripped)
+                    num = int(stripped)
+                    if "maximum" in prop and num > prop["maximum"]:
+                        num = prop["maximum"]
+                    coerced[key] = num
                 elif stripped in ("all", "none", "null", "no limit", "unlimited", "max"):
                     # The user asked for "all" records, so drop the explicit limit parameter
                     coerced.pop(key, None)
+            elif isinstance(value, (int, float)):
+                num = int(value)
+                if "maximum" in prop and num > prop["maximum"]:
+                    num = prop["maximum"]
+                coerced[key] = num
             elif value is None:
                 coerced.pop(key, None)
     return coerced
@@ -453,9 +461,11 @@ class LLMOrchestrator:
             total_results += len(raw_data)
             call_log.append({
                 "source": SOURCE_LABELS.get(func_name, func_name),
+                "function": func_name,
                 "args": args,
                 "result_count": len(raw_data),
                 "freshness_status": conn_result.freshness_status,
+                "records": raw_data[:10],
             })
 
         if not answers:

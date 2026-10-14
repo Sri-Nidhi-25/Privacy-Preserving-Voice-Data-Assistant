@@ -307,6 +307,39 @@
   .details-item span { color: var(--muted); display: block; margin-bottom: 2px; }
   .details-item b { color: var(--text); font-family: monospace; }
 
+  /* Records Dropdown Accordion */
+  .records-dropdown {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .records-dropdown summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #58a6ff;
+    user-select: none;
+    outline: none;
+    background: #161b22;
+    transition: background 0.15s;
+  }
+  .records-dropdown summary:hover {
+    background: #21262d;
+  }
+  .records-dropdown pre {
+    margin: 0;
+    padding: 12px;
+    background: #090d13;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.75rem;
+    color: #7ee787;
+    overflow-x: auto;
+    max-height: 240px;
+    line-height: 1.4;
+  }
+
   /* Latency Table */
   .latency-bar {
     display: flex;
@@ -689,6 +722,21 @@ function renderTurn(data, apiUrl, filename, sourceLabel) {
           <b>${latencies.total ?? 'N/A'} ms</b>
         </div>
       </div>
+
+      <!-- Collapsible Tool Results & Records Dropdown -->
+      ${(meta.tool_calls && meta.tool_calls.length > 0) ? `
+        <div class="section-row">
+          <span class="label">Retrieved Database Records</span>
+          ${meta.tool_calls.map((tc, idx) => `
+            <details class="records-dropdown" style="margin-bottom:6px;">
+              <summary>
+                &#9656; View ${escapeHtml(tc.source || tc.function || 'Source')} Results (${tc.result_count || 0} records retrieved)
+              </summary>
+              <pre>${escapeHtml(JSON.stringify(tc.records || tc.args || tc, null, 2))}</pre>
+            </details>
+          `).join('')}
+        </div>
+      ` : ''}
 
       <!-- Latency Breakdown -->
       <div class="section-row">
