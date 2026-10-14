@@ -726,15 +726,23 @@ function renderTurn(data, apiUrl, filename, sourceLabel) {
       <!-- Collapsible Tool Results & Records Dropdown -->
       ${(meta.tool_calls && meta.tool_calls.length > 0) ? `
         <div class="section-row">
-          <span class="label">Retrieved Database Records</span>
-          ${meta.tool_calls.map((tc, idx) => `
-            <details class="records-dropdown" style="margin-bottom:6px;">
-              <summary>
-                &#9656; View ${escapeHtml(tc.source || tc.function || 'Source')} Results (${tc.result_count || 0} records retrieved)
-              </summary>
-              <pre>${escapeHtml(JSON.stringify(tc.records || tc.args || tc, null, 2))}</pre>
-            </details>
-          `).join('')}
+          <span class="label">Retrieved Database Records &amp; Matches</span>
+          ${meta.tool_calls.map((tc, idx) => {
+            const isCorrelated = (tc.source || '').toLowerCase().includes('correlated');
+            const summaryTitle = isCorrelated 
+              ? `🎯 ${escapeHtml(tc.source)} (${tc.result_count || 0} exact matches answering question)` 
+              : `▸ View ${escapeHtml(tc.source || tc.function || 'Source')} Results (${tc.result_count || 0} records)`;
+            const borderStyle = isCorrelated ? 'border: 1px solid #238636; background: #0d1e13;' : '';
+            const summaryColor = isCorrelated ? 'color: #3fb950; font-weight: 700;' : '';
+            return `
+              <details class="records-dropdown" style="margin-bottom:6px; ${borderStyle}" ${isCorrelated ? 'open' : ''}>
+                <summary style="${summaryColor}">
+                  ${summaryTitle}
+                </summary>
+                <pre>${escapeHtml(JSON.stringify(tc.records || tc.args || tc, null, 2))}</pre>
+              </details>
+            `;
+          }).join('')}
         </div>
       ` : ''}
 

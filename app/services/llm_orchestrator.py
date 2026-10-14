@@ -473,16 +473,38 @@ class LLMOrchestrator:
 
         # Cross-domain correlation synthesis: if both CRM and Support data were retrieved, perform join
         final_answer_text = " ".join(answers)
+        correlated_records = []
         if "get_crm_data" in collected_data_by_tool and "get_support_tickets" in collected_data_by_tool:
             c_data = collected_data_by_tool["get_crm_data"]
             s_data = collected_data_by_tool["get_support_tickets"]
-            c_ids = {c.get("customer_id") for c in c_data if "customer_id" in c}
-            correlated_tickets = [t for t in s_data if t.get("customer_id") in c_ids]
-            unique_customers_with_tickets = {t.get("customer_id") for t in correlated_tickets}
+            c_map = {c.get("customer_id"): c for c in c_data if "customer_id" in c}
+            for t in s_data:
+                cid = t.get("customer_id")
+                if cid in c_map:
+                    c = c_map[cid]
+                    correlated_records.append({
+                        "ticket_id": t.get("ticket_id"),
+                        "ticket_subject": t.get("subject"),
+                        "ticket_status": t.get("status"),
+                        "ticket_priority": t.get("priority"),
+                        "customer_id": cid,
+                        "customer_name": c.get("name"),
+                        "customer_status": c.get("status"),
+                        "created_at": t.get("created_at"),
+                    })
+            unique_customers_with_tickets = {r["customer_id"] for r in correlated_records}
             final_answer_text = (
                 f"Across {len(c_data)} matching customers and {len(s_data)} tickets, "
-                f"there are {len(correlated_tickets)} tickets belonging to {len(unique_customers_with_tickets)} of those customers."
+                f"there are {len(correlated_records)} tickets belonging to {len(unique_customers_with_tickets)} of those customers."
             )
+            call_log.append({
+                "source": "Correlated Answers (CRM + Support)",
+                "function": "cross_domain_correlation",
+                "args": {"join_key": "customer_id"},
+                "result_count": len(correlated_records),
+                "freshness_status": latest_freshness_status,
+                "records": correlated_records,
+            })
 
         source_last_updated = max(source_timestamps) if source_timestamps else "unknown"
         now_iso = datetime.now(timezone.utc).isoformat()
