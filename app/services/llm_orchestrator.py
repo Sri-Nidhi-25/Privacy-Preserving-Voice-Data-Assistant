@@ -157,6 +157,7 @@ TOOLS = [
                 "properties": {
                     "status": {"type": "string", "enum": ["open", "closed"]},
                     "priority": {"type": "string", "enum": ["low", "medium", "high"]},
+                    "month": {"type": "string", "description": "Filter by month name or number, e.g. 'March', '03'"},
                     "limit": {"type": "integer", "default": 10},
                 },
             },
@@ -195,6 +196,7 @@ SCHEMA = {
         "properties": {
             "status": {"type": "string", "enum": ["open", "closed"]},
             "priority": {"type": "string", "enum": ["low", "medium", "high"]},
+            "month": {"type": "string"},
             "limit": {"type": "integer", "minimum": 0, "maximum": 100},
         }
     },
