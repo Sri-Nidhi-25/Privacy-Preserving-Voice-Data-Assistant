@@ -188,7 +188,7 @@ SCHEMA = {
     "get_crm_data": {
         "properties": {
             "status": {"type": "string", "enum": ["active", "inactive"]},
-            "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+            "limit": {"type": "integer", "minimum": 0, "maximum": 100},
         }
     },
     "get_support_tickets": {
@@ -261,17 +261,23 @@ def _coerce_args(func_name: str, args: dict) -> dict:
                 stripped = value.strip().lower()
                 if stripped.lstrip("-").isdigit():
                     num = int(stripped)
-                    if "maximum" in prop and num > prop["maximum"]:
-                        num = prop["maximum"]
-                    coerced[key] = num
+                    if key == "limit" and num <= 0:
+                        coerced.pop(key, None)
+                    else:
+                        if "maximum" in prop and num > prop["maximum"]:
+                            num = prop["maximum"]
+                        coerced[key] = num
                 elif stripped in ("all", "none", "null", "no limit", "unlimited", "max"):
                     # The user asked for "all" records, so drop the explicit limit parameter
                     coerced.pop(key, None)
             elif isinstance(value, (int, float)):
                 num = int(value)
-                if "maximum" in prop and num > prop["maximum"]:
-                    num = prop["maximum"]
-                coerced[key] = num
+                if key == "limit" and num <= 0:
+                    coerced.pop(key, None)
+                else:
+                    if "maximum" in prop and num > prop["maximum"]:
+                        num = prop["maximum"]
+                    coerced[key] = num
             elif value is None:
                 coerced.pop(key, None)
     return coerced
