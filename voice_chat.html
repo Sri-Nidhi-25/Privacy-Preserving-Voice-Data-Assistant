@@ -89,6 +89,16 @@
     border-radius: 6px;
     font-size: 0.82rem;
   }
+  .config-group select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
   .config-group input[type="checkbox"] {
     accent-color: var(--accent);
     cursor: pointer;
@@ -371,8 +381,8 @@
 <body>
 <div class="app">
   <header>
-    <h1>Voice Data Assistant <span class="tag">Phase 5.5 Testbed</span></h1>
-    <div class="sub">Complete end-to-end voice pipeline validation: Real Speech &rarr; Obfuscation &rarr; Whisper &rarr; Correction &rarr; Intent Routing &rarr; Selective Abstention &rarr; Tool Execution &rarr; TTS.</div>
+    <h1>Voice Data Assistant</h1>
+    <div class="sub">Privacy-preserving voice pipeline: Real Speech &rarr; Obfuscation &rarr; Whisper &rarr; Correction &rarr; Intent Routing &rarr; Selective Abstention &rarr; Tool Execution &rarr; TTS.</div>
   </header>
 
   <!-- Configuration Bar -->
@@ -386,8 +396,17 @@
       <input id="apiKey" type="text" value="dev-insecure-key" size="20" />
     </div>
     <div class="config-group">
+      <label for="obfIntensity"><b>Obfuscation:</b></label>
+      <select id="obfIntensity">
+        <option value="mild">Mild (±2 st shift)</option>
+        <option value="medium">Medium (±4 st shift)</option>
+        <option value="strong">High / Strong (±6 st shift)</option>
+        <option value="very_strong">Very Strong (±8 st shift)</option>
+      </select>
+    </div>
+    <div class="config-group">
       <input id="enableAbstention" type="checkbox" checked />
-      <label for="enableAbstention"><b>Enable Phase 5 Selective Abstention</b></label>
+      <label for="enableAbstention"><b>Enable Selective Abstention</b></label>
     </div>
   </div>
 
@@ -445,7 +464,22 @@ const statusBar = document.getElementById('statusBar');
 const turnLog = document.getElementById('turnLog');
 const apiUrlInput = document.getElementById('apiUrl');
 const apiKeyInput = document.getElementById('apiKey');
+const obfIntensitySelect = document.getElementById('obfIntensity');
 const enableAbstentionInput = document.getElementById('enableAbstention');
+
+// Restore saved obfuscation preference from localStorage if available
+const savedIntensity = localStorage.getItem('obfuscation_intensity');
+if (savedIntensity && ['mild', 'medium', 'strong', 'high', 'very_strong', 'verystrong'].includes(savedIntensity.toLowerCase())) {
+  const norm = savedIntensity.toLowerCase();
+  obfIntensitySelect.value = (norm === 'high') ? 'strong' : ((norm === 'verystrong') ? 'very_strong' : norm);
+} else {
+  obfIntensitySelect.value = 'strong';
+}
+
+obfIntensitySelect.addEventListener('change', () => {
+  localStorage.setItem('obfuscation_intensity', obfIntensitySelect.value);
+  statusBar.textContent = `Obfuscation intensity set to ${obfIntensitySelect.value.toUpperCase()}. Ready for audio input.`;
+});
 
 let mediaRecorder, recordedChunks = [], audioStream;
 let timerInterval = null, secondsElapsed = 0;
@@ -587,9 +621,11 @@ async function sendAudio(blobOrFile, filename, sourceLabel) {
   const apiUrl = apiUrlInput.value.trim();
   const apiKey = apiKeyInput.value.trim();
   const enableAbstention = enableAbstentionInput.checked;
+  const obfuscationStrength = obfIntensitySelect.value;
 
   const urlWithParams = new URL(apiUrl, window.location.origin);
   urlWithParams.searchParams.set('enable_abstention', enableAbstention ? 'true' : 'false');
+  urlWithParams.searchParams.set('obfuscation_strength', obfuscationStrength);
 
   const formData = new FormData();
   formData.append('audio_file', blobOrFile, filename);
@@ -688,15 +724,26 @@ function renderTurn(data, apiUrl, filename, sourceLabel) {
         <span class="label">Assistant Response &amp; TTS Playback</span>
         <div class="answer-box">
           <p style="margin:0;">${escapeHtml(data.answer_text)}</p>
-          ${data.answer_audio_url ? `
-            <div class="answer-audio-row">
-              <span style="font-size:0.75rem; color:var(--muted);">TTS Audio:</span>
-              <audio controls src="${base}${data.answer_audio_url}"></audio>
+          ${(meta.llm_error || meta.failure_type) ? `
+            <div style="margin-top:8px; padding:6px 10px; background:#2d1a1a; border:1px solid #f85149; border-radius:4px; font-size:0.75rem;">
+              <span style="color:#f85149; font-weight:700;">⚠ Internal Error</span>
+              ${meta.failure_type ? `<span style="margin-left:8px; color:#e3b341;">[${escapeHtml(meta.failure_type)}]</span>` : ''}
+              ${meta.llm_error ? `<div style="margin-top:4px; color:#c9d1d9; font-family:monospace;">${escapeHtml(meta.llm_error)}</div>` : ''}
             </div>
           ` : ''}
+          ${data.answer_audio_url ? `
+            <div class="answer-audio-row">
+              <span style="font-size:0.75rem; color:#58a6ff; font-weight:600;">🔊 TTS Audio:</span>
+              <audio controls src="${base}${data.answer_audio_url}"></audio>
+            </div>
+          ` : (meta.tts_failed ? `
+            <div class="answer-audio-row" style="color:#e3b341; font-size:0.75rem;">
+              <span>⚠️ TTS Audio Unavailable: ${escapeHtml(meta.tts_error || 'Synthesis failed')}</span>
+            </div>
+          ` : '')}
           ${data.obfuscated_audio_url ? `
             <div class="answer-audio-row">
-              <span style="font-size:0.75rem; color:var(--muted);">Obfuscated Audio:</span>
+              <span style="font-size:0.75rem; color:var(--muted);">Obfuscated Input:</span>
               <audio controls src="${base}${data.obfuscated_audio_url}"></audio>
             </div>
           ` : ''}
@@ -706,12 +753,19 @@ function renderTurn(data, apiUrl, filename, sourceLabel) {
       <!-- Diagnostics & Execution Details -->
       <div class="details-grid">
         <div class="details-item">
+          <span>Obfuscation Intensity</span>
+          <b style="text-transform: capitalize; color: #58a6ff;">
+            ${escapeHtml((meta.obfuscation_strength || 'mild').replace('_', ' '))}
+            ${meta.obfuscation_details?.actual_shift_semitones !== undefined && meta.obfuscation_details?.actual_shift_semitones !== null ? `<span style="font-size:0.75rem; color:#8b949e; font-weight:normal;"> (${meta.obfuscation_details.actual_shift_semitones > 0 ? '+' : ''}${meta.obfuscation_details.actual_shift_semitones} st shift)</span>` : ''}
+          </b>
+        </div>
+        <div class="details-item">
           <span>Sources Used</span>
           <b>${(meta.data_sources_used || []).join(', ') || 'None'}</b>
         </div>
         <div class="details-item">
           <span>Results Count</span>
-          <b>${meta.result_count !== undefined ? meta.result_count : 0} records</b>
+          <b>${meta.result_count > 10 ? `10/${meta.result_count}` : (meta.result_count !== undefined ? meta.result_count : 0)} records</b>
         </div>
         <div class="details-item">
           <span>STT Confidence</span>
@@ -731,7 +785,7 @@ function renderTurn(data, apiUrl, filename, sourceLabel) {
             const isCorrelated = (tc.source || '').toLowerCase().includes('correlated');
             const summaryTitle = isCorrelated 
               ? `🎯 ${escapeHtml(tc.source)} (${tc.result_count || 0} exact matches answering question)` 
-              : `▸ View ${escapeHtml(tc.source || tc.function || 'Source')} Results (${tc.result_count || 0} records)`;
+              : `View ${escapeHtml(tc.source || tc.function || 'Source')} Results (${tc.result_count > 10 ? `10/${tc.result_count}` : (tc.result_count || 0)} records)`;
             const borderStyle = isCorrelated ? 'border: 1px solid #238636; background: #0d1e13;' : '';
             const summaryColor = isCorrelated ? 'color: #3fb950; font-weight: 700;' : '';
             return `

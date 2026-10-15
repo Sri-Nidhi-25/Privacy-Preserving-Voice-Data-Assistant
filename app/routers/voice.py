@@ -9,11 +9,12 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
+from typing import Optional
 
 import soundfile as sf
-from fastapi import APIRouter, UploadFile, File, Header, HTTPException, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Header, HTTPException, BackgroundTasks, Query
 
-from app.config import settings
+from app.config import settings, Settings
 from app.failure import FailureType, PipelineError
 from app.models.voice import QueryResponse
 from app.services.llm_orchestrator import LLMOrchestrator
@@ -41,7 +42,15 @@ MAX_FILE_SIZE = settings.MAX_AUDIO_SIZE_MB * 1024 * 1024
 AUDIO_DIR = Path("temp_audio")
 AUDIO_DIR.mkdir(exist_ok=True)
 
-STRENGTH_TO_SEMITONES = {"mild": 2.0, "medium": 4.0, "strong": 6.0}
+STRENGTH_TO_SEMITONES = {
+    "mild": 2.0,
+    "medium": 4.0,
+    "strong": 6.0,
+    "high": 6.0,
+    "very_strong": 8.0,
+    "verystrong": 8.0,
+    "very strong": 8.0,
+}
 
 # Singletons
 obfuscator = FormantPreservingObfuscator(
@@ -104,6 +113,7 @@ async def voice_query(
     audio_file: UploadFile = File(...),
     api_key: str = Header(...),
     enable_abstention: bool = True,
+    obfuscation_strength: Optional[str] = Query(None, description="Obfuscation intensity override: mild, medium, strong, or high"),
     background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     request_id = str(uuid.uuid4())
@@ -164,18 +174,51 @@ async def voice_query(
         sf.write(str(normalized_path), y, sr)
         created_files.append(normalized_path)
 
+        # Resolve obfuscation strength (query param > fresh .env reading > settings > "mild")
+        effective_strength = obfuscation_strength
+        if not effective_strength:
+            try:
+                effective_strength = Settings().OBFUSCATION_STRENGTH
+            except Exception:
+                effective_strength = settings.OBFUSCATION_STRENGTH
+        effective_strength = (effective_strength or "mild").strip().lower()
+        if effective_strength == "high":
+            effective_strength = "strong"
+        elif effective_strength in {"verystrong", "very strong"}:
+            effective_strength = "very_strong"
+        if effective_strength not in STRENGTH_TO_SEMITONES:
+            effective_strength = "mild"
+
         # 3. Voice Obfuscation
         t_obf_start = time.perf_counter()
         obf_path = input_path.with_suffix(".obf.wav")
         created_files.append(obf_path)
+        base_shift = STRENGTH_TO_SEMITONES[effective_strength]
+        obfuscator.semitone_shift = base_shift
+        obfuscator.jitter = 0.5 if effective_strength == "mild" else (1.5 if effective_strength == "very_strong" else 1.0)
+
+        actual_shift = None
         try:
-            obfuscator.obfuscate(normalized_path, obf_path)
+            actual_shift = obfuscator.obfuscate(normalized_path, obf_path)
         except Exception as exc:
             log_event(logger, request_id, "obfuscation", "failed", error=str(exc))
             raise PipelineError(FailureType.OBFUSCATION_FAILED, f"Voice obfuscation failed: {exc}", status_code=500).to_http()
 
         latency_ms["obfuscation"] = int((time.perf_counter() - t_obf_start) * 1000)
-        log_event(logger, request_id, "obfuscation", "completed", latency_ms=latency_ms["obfuscation"])
+        obfuscation_details = {
+            "strength": effective_strength,
+            "base_semitones": base_shift,
+            "actual_shift_semitones": round(actual_shift, 2) if actual_shift is not None else None,
+        }
+        log_event(
+            logger,
+            request_id,
+            "obfuscation",
+            "completed",
+            latency_ms=latency_ms["obfuscation"],
+            strength=effective_strength,
+            actual_shift=round(actual_shift, 2) if actual_shift is not None else None,
+        )
 
         # 4. Speech-to-Text (Whisper)
         t_stt_start = time.perf_counter()
@@ -225,6 +268,8 @@ async def voice_query(
                     "source_last_updated": "unknown",
                     "tool_calls": [],
                     "low_confidence_transcription": True,
+                    "obfuscation_strength": effective_strength,
+                    "obfuscation_details": obfuscation_details,
                     "stt_confidence": stt_confidence,
                     "latency_ms": latency_ms,
                     "fallback_used": True,
@@ -279,6 +324,8 @@ async def voice_query(
         latency_ms["total"] = int((time.perf_counter() - t_start) * 1000)
 
         metadata["request_id"] = request_id
+        metadata["obfuscation_strength"] = effective_strength
+        metadata["obfuscation_details"] = obfuscation_details
         metadata["low_confidence_transcription"] = False
         metadata["stt_confidence"] = stt_confidence
         metadata["latency_ms"] = latency_ms

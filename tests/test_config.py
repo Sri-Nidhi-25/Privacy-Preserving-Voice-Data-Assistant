@@ -1,4 +1,4 @@
-﻿"""
+"""
 tests/test_config.py - Tests for configuration loading and validation.
 """
 import pytest
@@ -47,3 +47,19 @@ def test_string_sanitization():
     assert s.OLLAMA_MODEL == "llama3.2:latest"
     assert s.STT_MODEL == "small.en"
     assert s.OBFUSCATION_STRENGTH == "mild"
+
+
+def test_high_obfuscation_strength_alias():
+    s = Settings(OBFUSCATION_STRENGTH="high")
+    assert s.OBFUSCATION_STRENGTH == "strong"
+
+
+def test_very_strong_obfuscation_strength():
+    s1 = Settings(OBFUSCATION_STRENGTH="very_strong")
+    assert s1.OBFUSCATION_STRENGTH == "very_strong"
+
+    s2 = Settings(OBFUSCATION_STRENGTH="verystrong")
+    assert s2.OBFUSCATION_STRENGTH == "very_strong"
+
+    s3 = Settings(OBFUSCATION_STRENGTH="very strong")
+    assert s3.OBFUSCATION_STRENGTH == "very_strong"

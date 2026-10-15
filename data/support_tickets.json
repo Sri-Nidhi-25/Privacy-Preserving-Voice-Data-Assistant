@@ -48,5 +48,15 @@
   {"ticket_id": 47, "customer_id": 40, "subject": "Issue 47", "priority": "low", "created_at": "2026-01-21T03:46:48.376037", "status": "open"},
   {"ticket_id": 48, "customer_id": 4, "subject": "Issue 48", "priority": "high", "created_at": "2026-02-05T03:46:48.376039", "status": "open"},
   {"ticket_id": 49, "customer_id": 40, "subject": "Issue 49", "priority": "high", "created_at": "2026-01-26T03:46:48.376042", "status": "closed"},
-  {"ticket_id": 50, "customer_id": 40, "subject": "Issue 50", "priority": "medium", "created_at": "2026-01-26T03:46:48.376044", "status": "open"}
+  {"ticket_id": 50, "customer_id": 40, "subject": "Issue 50", "priority": "medium", "created_at": "2026-01-26T03:46:48.376044", "status": "open"},
+  {"ticket_id": 51, "customer_id": 3,  "subject": "Issue 51", "priority": "low",    "created_at": "2026-03-02T03:46:48.376100", "status": "closed"},
+  {"ticket_id": 52, "customer_id": 7,  "subject": "Issue 52", "priority": "low",    "created_at": "2026-03-05T03:46:48.376102", "status": "closed"},
+  {"ticket_id": 53, "customer_id": 11, "subject": "Issue 53", "priority": "low",    "created_at": "2026-03-09T03:46:48.376104", "status": "closed"},
+  {"ticket_id": 54, "customer_id": 15, "subject": "Issue 54", "priority": "low",    "created_at": "2026-03-14T03:46:48.376106", "status": "open"},
+  {"ticket_id": 55, "customer_id": 19, "subject": "Issue 55", "priority": "medium", "created_at": "2026-03-17T03:46:48.376108", "status": "open"},
+  {"ticket_id": 56, "customer_id": 23, "subject": "Issue 56", "priority": "medium", "created_at": "2026-03-21T03:46:48.376110", "status": "closed"},
+  {"ticket_id": 57, "customer_id": 27, "subject": "Issue 57", "priority": "high",   "created_at": "2026-03-24T03:46:48.376112", "status": "open"},
+  {"ticket_id": 58, "customer_id": 31, "subject": "Issue 58", "priority": "high",   "created_at": "2026-03-27T03:46:48.376114", "status": "open"},
+  {"ticket_id": 59, "customer_id": 42, "subject": "Issue 59", "priority": "high",   "created_at": "2026-03-29T03:46:48.376116", "status": "closed"},
+  {"ticket_id": 60, "customer_id": 48, "subject": "Issue 60", "priority": "medium", "created_at": "2026-03-31T03:46:48.376118", "status": "closed"}
 ]

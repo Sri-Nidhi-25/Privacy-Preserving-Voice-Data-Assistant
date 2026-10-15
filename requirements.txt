@@ -20,3 +20,6 @@ python-dotenv
 # Testing
 pytest
 pytest-asyncio
+
+# Benchmark (evaluation/benchmark_obfuscation.py)
+jiwer

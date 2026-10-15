@@ -1,218 +1,358 @@
-# Privacy-Preserving Voice Data Assistant (Phase 1 Prototype)
+# Privacy-Preserving Voice Data Assistant
 
-A local, privacy-preserving voice query assistant that performs speaker voice obfuscation, automatic speech recognition (Whisper), domain transcript correction, query classification, data retrieval, and text-to-speech synthesis (Edge-TTS).
-
-> **Deployment Note:** This is an evaluation-ready local prototype designed for controlled experimentation and reliability measurement. It is intended for local single-node development, not high-concurrency enterprise cloud deployment.
+A local, privacy-preserving voice query assistant that combines speaker voice obfuscation, automatic speech recognition (Whisper), domain transcript correction, selective abstention, tool-calling, and text-to-speech synthesis — all running locally with no data leaving the machine.
 
 ---
 
-## 1. Core Architecture Pipeline
+## Architecture: Full Pipeline
 
 ```text
-Audio Upload (WAV, MP3, WebM, OGG)
+Audio Upload (WAV, MP3, WebM, OGG, MPEG)
   │
   ▼
-1. Audio Validation Layer (size, decodability, duration checks)
+1. Audio Validation
+     Size limit, duration checks, decodability check (pydub/ffmpeg)
+     → Rejects corrupt, silent, or oversized files before any processing
   │
   ▼
-2. Formant-Preserving Obfuscation (WORLD Vocoder F0 pitch shifting)
+2. Voice Obfuscation  (FormantPreservingObfuscator — WORLD Vocoder)
+     Pitch-shifts the speaker's F0 (fundamental frequency) by a configurable
+     semitone amount while preserving spectral envelope, so Whisper STT still
+     works accurately on the obfuscated audio.
+     Intensities: mild (±2 st) | medium (±4 st) | strong (±6 st) | very_strong (±8 st)
+     Gaussian jitter is added to the shift so consecutive requests are not identical.
   │
   ▼
-3. Speech-to-Text (Whisper STT with multi-temperature retry + confidence scores)
-  │  ├── [Low confidence detected] ──▶ Abstain (safely prompt user for retry)
-  ▼  └── [Acceptable confidence]
-4. Domain Transcript Correction (LLM pass with overlap & refusal guardrails)
+3. Speech-to-Text  (OpenAI Whisper — local, offline)
+     Transcribes the obfuscated audio. Returns confidence signals:
+     avg_logprob, no_speech_prob, compression_ratio.
+     Low-confidence results (avg_logprob < -1.0) trigger early abstention.
   │
   ▼
-5. Routing & Tool Argument Validation (Schema-checked parameters)
-  │  ├── [Invalid tool arguments] ──▶ Reject immediately; connector NEVER executed
-  ▼  └── [Valid tool arguments]
-6. Connector Execution (Mock CRM, Support, Analytics connectors)
+4. Correction Guard  (LLM pass via Ollama)
+     Fixes domain-specific transcription errors:
+     "high priority" vs "hai priority", "inactive" vs "in active", etc.
+     Includes overlap and refusal guardrails — refuses corrections that
+     change intent or introduce hallucinations.
   │
   ▼
-7. Answer Generation & Voice Optimization (Summarization + voice limiting)
+5. Intent Routing
+     Classifies the corrected transcript into one of:
+       crm_query | support_query | analytics_query | multi_domain | unknown
+     Uses keyword matching + LLM classification with a fallback chain.
   │
   ▼
-8. Text-to-Speech Synthesis (Edge-TTS with fallback preservation of text)
+6. Selective Abstention  (Evidence-Grounded Abstention Engine)
+     Decouples Domain Entity Evidence (E_domain) from Operational Speech-Act
+     Evidence (E_op) and Distractor Penalty (D_dist):
+       EXECUTE : High domain + high operational evidence, low distractor penalty
+       ABSTAIN : Domain vocabulary present but missing operational evidence,
+                 or high distractor penalty (narrative, conversational, cross-domain)
+       DIRECT  : No domain vocabulary — routed straight to LLM for a plain answer
+     Prevents false-positive tool execution on semantic distractors
+     (e.g. "What is today's weather like?" must NOT trigger CRM tools).
+     Can be toggled on/off per-request from the UI or via query param.
   │
   ▼
-API JSON Response + Static Audio URLs + Observable Stage Latency & Metadata
+7. Tool Execution  (LLM Orchestrator → Connectors)
+     The LLM selects and calls the appropriate tool:
+       get_crm_data       → data/customers.json
+       get_support_tickets → data/support_tickets.json
+       get_analytics_data  → data/analytics.json
+     Tool arguments are validated and coerced before any connector is called.
+     Invalid arguments are rejected — connectors are NEVER called with bad args.
+     Multi-domain queries (e.g. "inactive customers with open tickets") perform
+     an inner join by customer_id across CRM + Support results.
+     Results are capped at 10 records for voice readability; the UI shows
+     "10/N records" when the total exceeds the cap.
+  │
+  ▼
+8. TTS Synthesis  (Edge-TTS — en-US-AriaNeural)
+     Synthesises the answer text into speech.
+     TTS failure is handled gracefully — the text answer is always preserved
+     in the response even if audio generation fails.
+  │
+  ▼
+API JSON Response
+  • answer_text          — plain text answer
+  • answer_audio_url     — URL to synthesised MP3
+  • obfuscated_audio_url — URL to obfuscated WAV (for inspection)
+  • transcript           — corrected STT transcript
+  • metadata             — request_id, sources, result count, abstention decision,
+                          obfuscation strength/shift, STT confidence, per-stage latency
 ```
 
 ---
 
-## 2. Phase 1 Reliability & Observability Improvements
-
-- **Central Failure Taxonomy:** Centralized `FailureType` enum and `PipelineError` in `app/failure.py` preventing raw stack traces or internal filesystem paths from leaking to clients.
-- **Audio Validation:** Explicit pre-processing validation (`app/voice/audio_validation.py`) checking file existence, size, duration limits, and audio decodability before running vocoders or Whisper.
-- **Temporary File Lifecycle:** Guaranteed cleanup of raw user audio uploads and intermediate uncompressed WAV files in `try ... finally` blocks on both success and failure paths. Periodic background cleaner prunes stale files.
-- **Structured JSON Logging:** Machine-readable event logging with ISO-8601 UTC timestamps, unique `request_id`, stage labels, and latency durations. Raw user speech and transcripts are withheld from logs by default.
-- **Request Traceability:** Unique UUID4 `request_id` generated for every incoming request and propagated through logs and response metadata.
-- **Stage-Level Latency:** Timing measurements in milliseconds for `validation`, `obfuscation`, `stt`, `orchestrator`, `tts`, and `total` request duration.
-- **Honest Data Freshness:** Clear distinction between `retrieved_at` (query execution time) and `source_last_updated` (actual underlying data modification time). Unknown timestamps are reported honestly as `"unknown"`.
-- **Liveness & Readiness Health Probes:**
-  - `GET /health/live`: Fast process liveness check.
-  - `GET /health/ready`: Deep dependency readiness check inspecting Whisper, Ollama, TTS, and data file availability, returning `ready`, `degraded`, or `unavailable`.
-- **Configurable CORS & Startup Validation:** Fail-fast validation in `app/config.py` validating models, timeouts, limits, and origins at startup.
-
----
-
-## 3. Project Structure
+## Project Structure
 
 ```text
 .
 ├── app/
-│   ├── config.py                 # Hardened configuration & startup validation
-│   ├── failure.py                # Central FailureType taxonomy & PipelineError
-│   ├── main.py                   # FastAPI app, CORS, error handlers, static mount
-│   ├── connectors/               # Data connectors (BaseConnector, CRM, Support, Analytics)
-│   ├── models/                   # Pydantic schemas (common, voice)
-│   ├── routers/                  # API routers (voice, data, health)
-│   ├── services/                 # LLM orchestration, business rules, summarization
-│   ├── utils/                    # Structured JSON logging, API key security
-│   └── voice/                    # Audio validation, WORLD obfuscator, Whisper STT, TTS
-├── data/                         # Mock JSON data files (customers, tickets, analytics)
-├── docs/
-│   └── reliability_invariants.md # Core safety & behavioral invariants
-├── evaluation/                   # Reproducible experiment benchmarks
-│   ├── benchmark_obfuscation.py
-│   └── README.md
-├── tests/                        # Comprehensive automated test suite
-├── temp_audio/                   # Ephemeral directory for audio processing
-├── voice_chat.html               # Single-page browser audio recording client
-├── .env.example                  # Environment configuration template
-└── requirements.txt              # Application and testing dependencies
+│   ├── config.py                  # Settings, obfuscation strength aliases, startup validation
+│   ├── failure.py                 # Central FailureType enum + PipelineError
+│   ├── main.py                    # FastAPI app, CORS, error handlers, static file mount
+│   ├── voice_chat.html            # Served copy of the UI (kept in sync with root)
+│   ├── connectors/
+│   │   ├── base.py                # BaseConnector, freshness evaluation
+│   │   ├── crm_connector.py       # Reads data/customers.json, filters by status/tier/name
+│   │   ├── support_connector.py   # Reads data/support_tickets.json, filters by priority/status
+│   │   └── analytics_connector.py # Reads data/analytics.json, DAU trends, averages
+│   ├── models/
+│   │   ├── common.py              # DataResponse, Metadata Pydantic schemas
+│   │   └── voice.py               # VoiceQueryResponse schema
+│   ├── routers/
+│   │   ├── health.py              # GET /health/live, GET /health/ready
+│   │   ├── data.py                # GET /data/{source} — direct data debug endpoint
+│   │   └── voice.py               # POST /voice/query — main pipeline endpoint
+│   ├── services/
+│   │   ├── abstention_router.py   # Evidence-grounded abstention engine (EXECUTE/ABSTAIN/DIRECT)
+│   │   ├── business_rules.py      # Voice result limits (MAX_RESULTS cap)
+│   │   ├── correction_guard.py    # LLM-based domain transcript correction with guardrails
+│   │   ├── data_identifier.py     # Infers data type from record structure
+│   │   ├── intent_router.py       # Classifies transcript into domain intent
+│   │   ├── llm_orchestrator.py    # Tool selection, argument coercion/validation, connector calls
+│   │   └── voice_optimizer.py     # summarize_if_large() — compresses large result sets
+│   ├── utils/
+│   │   ├── logging.py             # Structured JSON logging, ISO-8601 timestamps
+│   │   └── security.py            # API key validation middleware
+│   └── voice/
+│       ├── audio_validation.py    # File size, duration, decodability checks
+│       ├── obfuscator.py          # FormantPreservingObfuscator (WORLD vocoder) + VoiceObfuscator
+│       ├── stt.py                 # STTEngine — Whisper with confidence signals
+│       └── tts.py                 # Edge-TTS synthesis with graceful fallback
+├── data/
+│   ├── customers.json             # Mock CRM records
+│   ├── support_tickets.json       # Mock support tickets
+│   └── analytics.json             # Mock daily active user analytics
+├── tests/
+│   ├── conftest.py                # Shared fixtures (WAV file, TestClient)
+│   ├── test_api.py                # POST /voice/query endpoint tests
+│   ├── test_audio_validation.py   # Audio validation edge cases
+│   ├── test_config.py             # Settings, obfuscation strength alias resolution
+│   ├── test_connectors.py         # CRM / Support / Analytics connector tests
+│   ├── test_correction.py         # Correction guard LLM pass tests
+│   ├── test_health.py             # Health probe endpoint tests
+│   ├── test_invariants.py         # Safety invariants (bad args never reach connectors)
+│   ├── test_obfuscation.py        # Obfuscator output verification
+│   ├── test_routing.py            # Intent classification tests
+│   ├── test_stt.py                # Whisper STT confidence signal tests
+│   ├── test_tool_validation.py    # Tool arg coercion + validation (limit, priority, status)
+│   └── test_phase5_5/
+│       ├── test_pipeline_integration.py  # Real obfuscator + STT + LLM integration tests
+│       └── test_abstention_e2e.py        # Abstention router end-to-end with mocks
+├── evaluation/
+│   └── benchmark_obfuscation.py   # Benchmark: WER + routing fidelity across obfuscation strengths
+├── benchmark_audio/               # Generated outputs from benchmark runs (phrase WAVs, results.csv)
+├── temp_audio/                    # Ephemeral per-request audio files (auto-cleaned)
+├── voice_chat.html                # Browser UI (served at http://127.0.0.1:8000/)
+├── .env                           # Local config (not committed)
+├── .env.example                   # Config template
+├── requirements.txt               # All dependencies
+├── Dockerfile                     # Container build
+└── docker-compose.yml             # App + Ollama sidecar
 ```
 
 ---
 
-## 4. Setup & Running Locally
+## Setup & Running Locally
 
 ### Prerequisites
 - Python 3.10+
-- [Ollama](https://ollama.ai) running locally with `llama3.2:latest`
+- [Ollama](https://ollama.ai) running locally with `llama3.2:latest` pulled
+- `ffmpeg` on PATH (used by pydub/librosa for audio decoding)
 
-### 1. Installation
-```bash
+### 1. Create and activate virtual environment
+```powershell
 python -m venv venv
-# On Windows:
 .\venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
+```
 
+### 2. Install dependencies
+```powershell
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
-```bash
-cp .env.example .env
+### 3. Configure environment
+```powershell
+Copy-Item .env.example .env
 ```
-Ensure your `.env` contains your desired `API_KEY` and settings.
 
-### 3. Run FastAPI Service
-```bash
+Edit `.env` with your desired settings:
+```env
+API_KEY=secret-key-change-me
+OBFUSCATION_STRENGTH=mild        # mild | medium | strong | high | very_strong
+STT_MODEL=small.en
+OLLAMA_MODEL=llama3.2:latest
+LLM_TIMEOUT_SECONDS=120.0
+```
+
+### 4. Start the server
+```powershell
 .\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-Open `http://127.0.0.1:8000/` in your browser to interact with the voice client.
+
+Open **http://127.0.0.1:8000/** in your browser to use the voice assistant UI.
+
+> The `--reload` flag watches for file changes and restarts automatically during development.
 
 ---
 
-## 5. API Reference
+## Configuration Reference (`.env`)
 
-### Health Probes
-- `GET /health/live`: Returns `{"status": "alive"}`.
-- `GET /health/ready`: Returns component readiness details (`whisper`, `ollama`, `tts`, `crm`, `support`, `analytics`).
-- `GET /health`: Backward-compatible alias for `/health/ready`.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `API_KEY` | *(required)* | Server API key. UI uses `dev-insecure-key` which maps to the default. |
+| `OBFUSCATION_STRENGTH` | `mild` | Global default obfuscation strength. Can be overridden per-request from the UI dropdown. |
+| `STT_MODEL` | `small.en` | Whisper model name (`tiny`, `base`, `small`, `medium`, `large`). |
+| `OLLAMA_MODEL` | `llama3.2:latest` | Ollama model for correction guard + tool selection. |
+| `LLM_TIMEOUT_SECONDS` | `120.0` | Timeout for Ollama LLM calls. |
+| `MAX_RESULTS` | `10` | Maximum records returned to the voice pipeline per query. |
+| `ALLOWED_ORIGINS` | `http://127.0.0.1:8000` | CORS allowed origins (comma-separated). |
 
-### Data Endpoints (Debugging)
-- `GET /data/{source}?limit=10`: Returns mock data records from `crm`, `support`, or `analytics`.
+---
+
+## Obfuscation Intensities
+
+| Strength | Semitone Shift | Jitter | Alias(es) |
+|----------|---------------|--------|-----------|
+| `mild` | ±2 st | 0.5 | — |
+| `medium` | ±4 st | 1.0 | — |
+| `strong` | ±6 st | 1.0 | `high` |
+| `very_strong` | ±8 st | 1.5 | `verystrong`, `very strong` |
+
+The shift sign (raise/lower pitch) is randomised per request. Gaussian jitter means no two requests produce identical shifts. Obfuscation intensity can be changed:
+- **Per-request** via the UI dropdown (persisted in localStorage)
+- **Globally** via `OBFUSCATION_STRENGTH` in `.env` (hot-reloaded per request, no restart needed)
+
+---
+
+## API Reference
+
+### Health
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health/live` | Fast liveness check → `{"status": "alive"}` |
+| `GET` | `/health/ready` | Deep readiness check (Whisper, Ollama, TTS, data files) → `ready / degraded / unavailable` |
+| `GET` | `/health` | Alias for `/health/ready` |
+
+### Data (Debug)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/data/{source}?limit=10` | Returns raw records from `crm`, `support`, or `analytics` |
 
 ### Voice Query
-- `POST /voice/query`
-  - **Headers:** `api-key: <API_KEY>`
-  - **Body (multipart/form-data):** `audio_file` (WAV, MP3, WebM, OGG)
-  - **Response (JSON):**
-    ```json
-    {
-      "obfuscated_audio_url": "/static/xxx.obf.wav",
-      "answer_audio_url": "/static/xxx.answer.mp3",
-      "transcript": "Show me all high priority open tickets",
-      "answer_text": "Found 3 support tickets.",
-      "metadata": {
-        "request_id": "c7f7663e-72ba-4b53-9d41-3b74ad50c4ce",
-        "data_sources_used": ["support"],
-        "result_count": 3,
-        "retrieved_at": "2026-09-14T14:30:00.000Z",
-        "source_last_updated": "2026-09-14T12:00:00.000Z",
-        "low_confidence_transcription": false,
-        "stt_confidence": {
-          "avg_logprob": -0.21,
-          "no_speech_prob": 0.01,
-          "compression_ratio": 1.05,
-          "low_confidence": false
-        },
-        "latency_ms": {
-          "validation": 25,
-          "obfuscation": 180,
-          "stt": 820,
-          "orchestrator": 450,
-          "tts": 320,
-          "total": 1795
-        }
-      }
-    }
-    ```
-   ```
-   curl.exe -X POST "http://127.0.0.1:8000/voice/query?enable_abstention=true" `
+```
+POST /voice/query
+  ?obfuscation_strength=mild     # optional — overrides .env default for this request
+  ?enable_abstention=true        # optional — default true
+
+Headers:
+  api-key: dev-insecure-key
+
+Body (multipart/form-data):
+  audio_file: <WAV | MP3 | WebM | OGG | MPEG>
+```
+
+**Example with curl:**
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/voice/query?enable_abstention=true" `
   -H "api-key: dev-insecure-key" `
-  -F "audio_file=@inactive.mpeg;type=audio/mpeg"
-   ```
----
+  -F "audio_file=@your_query.mpeg;type=audio/mpeg"
+```
 
-## 6. Running Automated Tests
-
-Run the complete 201-test suite covering config, audio validation, obfuscation, STT, correction, routing, tool validation, connectors, health states, fault injection, calibration, metamorphic relations, and evaluation pipeline self-validation:
-
-```bash
-pytest tests/ -v
+**Response JSON:**
+```json
+{
+  "answer_text": "Found 3 open high-priority support tickets.",
+  "answer_audio_url": "/static/abc123.answer.mp3",
+  "obfuscated_audio_url": "/static/abc123.obf.wav",
+  "transcript": "How many open high priority tickets are there?",
+  "metadata": {
+    "request_id": "c7f7663e-72ba-4b53-9d41-3b74ad50c4ce",
+    "data_sources_used": ["support"],
+    "result_count": 3,
+    "abstention_decision": "EXECUTE",
+    "abstention_confidence": 1,
+    "abstention_reason": "High domain + operational evidence detected.",
+    "execution_prevented_by_abstention": false,
+    "obfuscation_strength": "mild",
+    "obfuscation_details": {
+      "strength": "mild",
+      "base_semitones": 2.0,
+      "actual_shift_semitones": 2.09
+    },
+    "stt_confidence": {
+      "avg_logprob": -0.35,
+      "no_speech_prob": 0.01,
+      "compression_ratio": 1.1,
+      "low_confidence": false
+    },
+    "latency_ms": {
+      "validation": 25,
+      "obfuscation": 2100,
+      "stt": 5800,
+      "correction": 4200,
+      "routing": 2,
+      "tts": 1500,
+      "total": 13627
+    }
+  }
+}
 ```
 
 ---
 
-## 7. Phase 4.6 — Experimental Integrity, Dual-Level Evaluation & Reproduction
+## Running Tests
 
-Phase 4.6 establishes strict experimental integrity, independent dataset freezing, dual-level evaluation, and honest, evidence-backed reporting:
-
-### A. Master Experiment Suite (Single Command)
-Run the complete Phase 4.6 evaluation suite (dataset verification, Level A text component routing, Level B real voice pipeline execution, reconstructed ablation study, real acoustic robustness on Whisper, and physical acoustic obfuscation analysis) with a single deterministic command:
-
-```bash
-python -m evaluation.run_final_experiment --seed 42 --output-dir experiments/results
+```powershell
+.\venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
-Outputs are automatically serialized to:
-- `experiments/results/master_experiment_manifest_latest.json` (provenance, git commit, seed, metric matrices)
-- `experiments/results/metrics.json` (structured high-level metrics)
-- `experiments/results/failures.json` (traceable failure logs with failure codes)
-- `experiments/results/component_results.jsonl` (Level A raw per-example records)
-- `experiments/results/pipeline_results.jsonl` (Level B raw speech pipeline records)
-- `experiments/results/dashboard.html` (interactive, self-contained visual results dashboard)
+Test coverage:
 
-### B. Evaluation Architecture & Dataset Tiers
-- **Dataset Tiers:** Partitioned into `dev/`, `validation/`, `held_out_test/`, and `challenge/`, cryptographically locked by SHA256 checksums in `evaluation/datasets/manifest.json`.
-- **Level A (Component Evaluation):** Measures text routing generalization on frozen held-out (86.7% accuracy) and challenge suites (68.0% accuracy).
-- **Level B (Voice Pipeline Evaluation):** Measures actual end-to-end task completion (100% on benchmark speech) from audio validation, formant-preserving obfuscation, Whisper STT, correction guard, to connector execution.
-- **Oracle-Free Metamorphic Invariants:** `tests/test_phase4/test_metamorphic.py` (78 invariant relation tests evaluating politeness, fillers, casing, and formatting transformations without hardcoded expected labels).
-- **Reconstructed Architectural Ablation:** `python -m evaluation.runners.ablation_runner` (quantifies the isolated impact of disabling the intent router, correction guard, tool-alignment gate, or retry policy against the Phase 1 18-keyword baseline).
-- **Real Acoustic Robustness Matrix:** `python -m evaluation.runners.robustness_runner` (evaluates physical speech audio under additive Gaussian noise through actual Whisper STT).
-- **Acoustic Obfuscation Analysis:** `python -m evaluation.runners.privacy_acoustic_runner` (measures physical F0 pitch shifts $\Delta F_0$; explicitly disclaims biometric speaker privacy).
+| Test File | What it covers |
+|-----------|---------------|
+| `test_config.py` | Settings parsing, all obfuscation strength aliases |
+| `test_audio_validation.py` | Size limits, duration checks, corrupt file rejection |
+| `test_obfuscation.py` | Formant-preserving obfuscator output across all 4 intensities |
+| `test_stt.py` | Whisper confidence signal extraction, low-confidence detection |
+| `test_correction.py` | Correction guard LLM pass, refusal guardrails |
+| `test_routing.py` | Intent classification, `_is_data_query` edge cases |
+| `test_tool_validation.py` | Argument coercion (limit, priority, status), invalid arg rejection |
+| `test_connectors.py` | CRM / Support / Analytics connector filter logic |
+| `test_invariants.py` | Safety invariants — invalid tool args never reach connectors |
+| `test_health.py` | Health probe liveness and readiness endpoints |
+| `test_api.py` | POST /voice/query end-to-end with mocked STT/LLM/TTS |
+| `test_phase5_5/` | Pipeline integration + abstention router end-to-end |
 
-### C. Integrity & Research Documentation
-- [Phase 4.6 Integrity Audit](docs/phase4_6_integrity_audit.md)
-- [Dataset Protocol & Freeze Policy](docs/evaluation_data_protocol.md)
-- [Contamination & Decontamination Analysis](docs/phase4_6_contamination_analysis.md)
-- [Metamorphic Testing Framework](docs/metamorphic_testing.md)
-- [Claim Verification & Classification Audit](docs/phase4_6_claim_audit.md)
-- [Final Research Evaluation Report](docs/final_evaluation_report.md)
-- [Reproduction Protocol Guide](docs/reproducibility.md)
+---
 
+## Obfuscation Benchmark
+
+Measures Word Error Rate (WER) and tool routing fidelity across obfuscation strengths on a fixed set of 8 test phrases:
+
+```powershell
+.\venv\Scripts\python.exe evaluation/benchmark_obfuscation.py --seed 42
+```
+
+Outputs to `benchmark_audio/`:
+- `phrase_N.mp3` — raw TTS-synthesised audio
+- `phrase_N_{strength}.wav` — obfuscated versions for each intensity
+- `results.csv` — WER + routing pass/fail per phrase × strength combination
+
+---
+
+## Key Design Decisions
+
+**Why WORLD vocoder instead of simple resampling?**
+Simple pitch resampling changes speech duration and distorts formants, making Whisper transcription unreliable. The WORLD vocoder separates F0 (pitch) from spectral envelope, so only pitch is shifted while formants remain intact — preserving STT accuracy while still meaningfully obfuscating speaker identity.
+
+**Why Evidence-Grounded Abstention instead of a simple confidence threshold?**
+A confidence threshold on the LLM alone causes false positives on distractor queries that mention domain vocabulary casually (e.g. "I used to work in customer support"). The abstention engine separately scores domain evidence (E_domain), operational retrieval intent (E_op), and distractor penalty (D_dist) before deciding whether to execute a tool call.
+
+**Why validate tool arguments before calling connectors?**
+The LLM occasionally generates structurally incorrect arguments (e.g. `{"limit": "all"}` for a counting query). Coercing and validating before the connector is called ensures the safety invariant: invalid tool arguments can never reach the data layer.
+
+**Why hot-reload `.env` per request instead of at startup?**
+Allows changing `OBFUSCATION_STRENGTH` (or any other setting) in `.env` and having it take effect immediately on the next request without restarting the server — useful during development.

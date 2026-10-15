@@ -15,7 +15,7 @@ class VoiceObfuscator:
     FormantPreservingObfuscator when transcription accuracy matters.
     """
 
-    SHIFT_RANGES = {"mild": (-1, 1), "medium": (-4, 4), "strong": (-6, 6)}
+    SHIFT_RANGES = {"mild": (-1, 1), "medium": (-4, 4), "strong": (-6, 6), "very_strong": (-8, 8)}
 
     # Tempo alone buys very little speaker obfuscation (a 2-4% rate change
     # is barely perceptible), so it isn't scaled by "strength" -- it's just
@@ -28,9 +28,11 @@ class VoiceObfuscator:
     MODE_WEIGHTS = {"pitch": 0.75, "tempo": 0.25}
 
     def __init__(self, strength: str = "mild"):
+        self.strength = strength
         self.shift_range = self.SHIFT_RANGES.get(strength, (-1, 1))
+        self.last_shift: float = 0.0
 
-    def obfuscate(self, input_path: Path, output_path: Path) -> None:
+    def obfuscate(self, input_path: Path, output_path: Path) -> float:
         y, sr = librosa.load(input_path, sr=16000)
 
         # Apply exactly ONE perturbation per call rather than stacking both.
@@ -51,11 +53,15 @@ class VoiceObfuscator:
         if mode == "pitch":
             semitones = random.uniform(*self.shift_range)
             y = librosa.effects.pitch_shift(y, sr=sr, n_steps=semitones)
+            actual_shift = float(semitones)
         else:
             rate = random.uniform(*self.RATE_RANGE)
             y = librosa.effects.time_stretch(y, rate=rate)
+            actual_shift = 0.0
 
+        self.last_shift = actual_shift
         sf.write(output_path, y, sr)
+        return actual_shift
 
 
 class FormantPreservingObfuscator:
@@ -98,8 +104,9 @@ class FormantPreservingObfuscator:
         self.semitone_shift = semitone_shift
         self.randomize = randomize
         self.jitter = jitter
+        self.last_shift: float = semitone_shift
 
-    def obfuscate(self, input_path: Path, output_path: Path) -> None:
+    def obfuscate(self, input_path: Path, output_path: Path) -> float:
         # Load audio robustly: librosa.load decodes non-WAV/MP3 with metadata
         # safely and standardizes sample rate to 16kHz mono.
         try:
@@ -128,6 +135,7 @@ class FormantPreservingObfuscator:
         shift = self.semitone_shift
         if self.randomize:
             shift += random.uniform(-self.jitter, self.jitter)
+        self.last_shift = float(shift)
         ratio = 2 ** (shift / 12.0)
 
         # f0 == 0 marks unvoiced frames; leave those at 0, don't scale silence/noise
@@ -142,3 +150,4 @@ class FormantPreservingObfuscator:
             y = y * (0.95 / max_val)
 
         sf.write(str(output_path), y, fs)
+        return float(shift)

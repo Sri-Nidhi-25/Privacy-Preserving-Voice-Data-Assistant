@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
 
-_VALID_OBFUSCATION = {"mild", "medium", "strong"}
+_VALID_OBFUSCATION = {"mild", "medium", "strong", "high", "very_strong", "verystrong", "very strong"}
 
 
 class Settings(BaseSettings):
@@ -57,11 +57,15 @@ class Settings(BaseSettings):
         self.STT_MODEL = self.STT_MODEL.strip()
         self.EDGE_TTS_VOICE = self.EDGE_TTS_VOICE.strip()
         self.OBFUSCATION_STRENGTH = self.OBFUSCATION_STRENGTH.strip().lower()
+        if self.OBFUSCATION_STRENGTH == "high":
+            self.OBFUSCATION_STRENGTH = "strong"
+        elif self.OBFUSCATION_STRENGTH in {"verystrong", "very strong"}:
+            self.OBFUSCATION_STRENGTH = "very_strong"
         if self.ALLOWED_ORIGINS:
             self.ALLOWED_ORIGINS = self.ALLOWED_ORIGINS.strip()
 
         # Validate obfuscation strength
-        if self.OBFUSCATION_STRENGTH not in _VALID_OBFUSCATION:
+        if self.OBFUSCATION_STRENGTH not in {"mild", "medium", "strong", "very_strong"}:
             raise ValueError(
                 f"OBFUSCATION_STRENGTH must be one of {_VALID_OBFUSCATION}, "
                 f"got: {self.OBFUSCATION_STRENGTH!r}"

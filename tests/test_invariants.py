@@ -1,4 +1,4 @@
-﻿"""
+"""
 tests/test_invariants.py - Explicit verification of core reliability invariants.
 """
 from pathlib import Path
@@ -45,14 +45,18 @@ def test_invariant_low_confidence_stt_abstains_from_orchestrator(client: TestCli
 def test_invariant_invalid_tool_args_never_reach_connector():
     """
     Invariant: An invalid tool call must never reach a connector.
+
+    Note: limit=-5 is NOT an invalid argument in our system — _coerce_args treats
+    any non-positive limit as 'no limit' and drops the key, so the connector runs
+    normally. This test uses a genuinely invalid enum value to verify the invariant.
     """
     orchestrator = LLMOrchestrator.__new__(LLMOrchestrator)
     mock_connector = MagicMock()
     orchestrator.connector_map = {"get_crm_data": mock_connector}
 
-    # Invalid argument: limit is negative
+    # Invalid argument: status="deleted" is not in the allowed enum ["active", "inactive"]
     tool_calls = [
-        {"function": {"name": "get_crm_data", "arguments": {"limit": -5}}}
+        {"function": {"name": "get_crm_data", "arguments": {"status": "deleted"}}}
     ]
     orchestrator._execute_tool_calls(tool_calls)
 

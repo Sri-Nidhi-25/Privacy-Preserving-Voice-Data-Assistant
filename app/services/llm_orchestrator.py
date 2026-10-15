@@ -36,7 +36,10 @@ CORRECTION_PROMPT = (
     "If the transcript appears to be asking about this domain data, correct "
     "any garbled or misheard words to the closest sensible domain term, "
     "keeping the original sentence structure and intent as close to the "
-    "original as possible. Do not add new information, do not answer the "
+    "original as possible. Support tickets only have 'low', 'medium', or 'high' priority. "
+    "The phrase 'no priority' or 'know priority' is an acoustic mishearing of 'low priority' "
+    "and must be corrected to 'low priority'. "
+    "Do not add new information, do not answer the "
     "question, do not invent details that aren't implied by the transcript. "
     "If the transcript is clearly NOT about this domain (general knowledge, "
     "small talk, greetings), return it completely unchanged.\n\n"
@@ -113,7 +116,16 @@ def correct_transcript(raw_transcript: str, model: str, client: Optional[Any] = 
     except Exception as exc:
         res["fallback_used"] = True
         res["rejection_reason"] = f"correction_call_failed: {exc}"
+        # Even on LLM call failure, apply domain acoustic confusion rules (e.g. no priority -> low priority)
+        fuzzy_fixed = re.sub(r"\b(?:no|know)\s+priority\b", "low priority", text, flags=re.IGNORECASE)
+        if fuzzy_fixed.lower() != text.lower():
+            res["text"] = fuzzy_fixed
+            res["correction_changed"] = True
+            res["correction_accepted"] = True
         return res
+
+    # Deterministic domain rule: "no priority" is an acoustic mishearing of "low priority" in support tickets
+    corrected = re.sub(r"\b(?:no|know)\s+priority\b", "low priority", corrected, flags=re.IGNORECASE)
 
     # Apply the Phase 3 deterministic reliability gate
     decision, final_text, reason = apply_correction_gate(text, corrected)
@@ -121,15 +133,25 @@ def correct_transcript(raw_transcript: str, model: str, client: Optional[Any] = 
     res["rejection_reason"] = reason
 
     if decision == CorrectionDecision.ACCEPT_CORRECTION:
+        # Guarantee phonetic normalization in accepted text
+        final_text = re.sub(r"\b(?:no|know)\s+priority\b", "low priority", final_text, flags=re.IGNORECASE)
         res["text"] = final_text
         res["correction_changed"] = (final_text.lower() != text.lower())
         res["correction_accepted"] = True
     else:
-        res["text"] = raw_transcript
-        res["correction_rejected"] = True
-        res["fallback_used"] = True
+        # If gate rejected LLM's full rewrite, still fix obvious acoustic domain confusions
+        fuzzy_fixed = re.sub(r"\b(?:no|know)\s+priority\b", "low priority", text, flags=re.IGNORECASE)
+        if fuzzy_fixed.lower() != text.lower():
+            res["text"] = fuzzy_fixed
+            res["correction_changed"] = True
+            res["correction_accepted"] = True
+        else:
+            res["text"] = raw_transcript
+            res["correction_rejected"] = True
+            res["fallback_used"] = True
 
     return res
+
 
 
 TOOLS = [
@@ -142,7 +164,7 @@ TOOLS = [
                 "type": "object",
                 "properties": {
                     "status": {"type": "string", "enum": ["active", "inactive"]},
-                    "limit": {"type": "integer", "default": 10},
+                    "limit": {"type": "integer", "description": "Optional maximum integer count of records to return. Omit if counting or retrieving all.", "default": 10},
                 },
             },
         },
@@ -158,7 +180,7 @@ TOOLS = [
                     "status": {"type": "string", "enum": ["open", "closed"]},
                     "priority": {"type": "string", "enum": ["low", "medium", "high"]},
                     "month": {"type": "string", "description": "Filter by month name or number, e.g. 'March', '03'"},
-                    "limit": {"type": "integer", "default": 10},
+                    "limit": {"type": "integer", "description": "Optional maximum integer count of records to return. Omit if counting or retrieving all.", "default": 10},
                 },
             },
         },
@@ -226,12 +248,15 @@ def _validate_args(func_name: str, args: dict) -> tuple[bool, str]:
     schema = SCHEMA.get(func_name)
     if not schema:
         return False, f"Unknown function {func_name}"
-    for key, value in args.items():
+    for key, value in list(args.items()):
         prop = schema["properties"].get(key)
         if not prop:
             return False, f"Unexpected argument '{key}'"
         if prop["type"] == "integer":
-            if not isinstance(value, int):
+            if not isinstance(value, int) or isinstance(value, bool):
+                if key == "limit":
+                    args.pop(key, None)
+                    continue
                 return False, f"'{key}' must be an integer"
             if "minimum" in prop and value < prop["minimum"]:
                 return False, f"'{key}' must be at least {prop['minimum']}"
@@ -248,9 +273,10 @@ def _coerce_args(func_name: str, args: dict) -> dict:
     (e.g. {"days": "2"} instead of {"days": 2}), which _validate_args then
     rejects outright since it does a strict isinstance(value, int) check.
     Coerce clean numeric strings to int before validation so a correctly-
-    intentioned tool call doesn't fail purely on JSON typing, while leaving
-    genuinely malformed values (e.g. "two", "2.5") to fail validation as
-    they should.
+    intentioned tool call doesn't fail purely on JSON typing.
+    For optional pagination parameters like 'limit', any non-numeric string
+    (e.g. 'all', 'count', 'total', 'how many', 'none', 'n/a') simply means
+    fetch all matching records without pagination limit.
     """
     schema = SCHEMA.get(func_name)
     if not schema:
@@ -258,20 +284,11 @@ def _coerce_args(func_name: str, args: dict) -> dict:
     coerced = dict(args)
     for key, value in list(coerced.items()):
         prop = schema["properties"].get(key)
-        if prop and prop["type"] == "integer":
-            if isinstance(value, str):
-                stripped = value.strip().lower()
-                if stripped.lstrip("-").isdigit():
-                    num = int(stripped)
-                    if key == "limit" and num <= 0:
-                        coerced.pop(key, None)
-                    else:
-                        if "maximum" in prop and num > prop["maximum"]:
-                            num = prop["maximum"]
-                        coerced[key] = num
-                elif stripped in ("all", "none", "null", "no limit", "unlimited", "max"):
-                    # The user asked for "all" records, so drop the explicit limit parameter
-                    coerced.pop(key, None)
+        if not prop:
+            continue
+        if prop["type"] == "integer":
+            if isinstance(value, bool):
+                coerced.pop(key, None)
             elif isinstance(value, (int, float)):
                 num = int(value)
                 if key == "limit" and num <= 0:
@@ -279,10 +296,68 @@ def _coerce_args(func_name: str, args: dict) -> dict:
                 else:
                     if "maximum" in prop and num > prop["maximum"]:
                         num = prop["maximum"]
+                    elif "minimum" in prop and num < prop["minimum"]:
+                        num = prop["minimum"]
                     coerced[key] = num
-            elif value is None:
+            elif isinstance(value, str):
+                stripped = value.strip().lower()
+                m = re.search(r"-?\d+", stripped)
+                if m:
+                    num = int(m.group(0))
+                    if key == "limit" and num <= 0:
+                        coerced.pop(key, None)
+                    else:
+                        if "maximum" in prop and num > prop["maximum"]:
+                            num = prop["maximum"]
+                        elif "minimum" in prop and num < prop["minimum"]:
+                            num = prop["minimum"]
+                        coerced[key] = num
+                elif key == "limit":
+                    # Non-numeric string for limit ("all", "count", "many", "none", "n/a", etc.)
+                    # User or LLM didn't specify a numeric limit, so remove it to fetch all matching
+                    coerced.pop(key, None)
+            elif value is None or key == "limit":
                 coerced.pop(key, None)
+        elif prop.get("type") == "string" and "enum" in prop:
+            if isinstance(value, str):
+                s = value.strip().lower()
+                if key == "priority":
+                    if s in {"any", "all", "all priorities", "any priority"}:
+                        coerced.pop(key, None)
+                    elif any(w in s for w in ["no", "none", "know", "low", "without", "unassigned", "unspecified", "minimal", "zero", "na", "n/a"]):
+                        coerced["priority"] = "low"
+                    elif any(w in s for w in ["med", "mid", "normal", "moderate"]):
+                        coerced["priority"] = "medium"
+                    elif any(w in s for w in ["high", "urgent", "critical", "max"]):
+                        coerced["priority"] = "high"
+                elif key == "status":
+                    if func_name == "get_support_tickets":
+                        if any(w in s for w in ["close", "resolved"]):
+                            coerced["status"] = "closed"
+                        elif "open" in s:
+                            coerced["status"] = "open"
+                    elif func_name == "get_crm_data":
+                        if any(w in s for w in ["inactive", "churn", "disabled"]):
+                            coerced["status"] = "inactive"
+                        elif any(w in s for w in ["active", "current"]):
+                            coerced["status"] = "active"
     return coerced
+
+
+def _normalize_no_priority(args: dict) -> dict:
+    """Normalize fuzzy priority words like 'no priority' to 'low' as per domain rules."""
+    priority_val = args.get("priority")
+    if isinstance(priority_val, str):
+        s = priority_val.strip().lower()
+        if s in {"any", "all", "all priorities", "any priority"}:
+            args.pop("priority", None)
+        elif any(w in s for w in ["no", "none", "know", "without", "unassigned", "unspecified", "zero", "minimal", "low", "na", "n/a"]):
+            args["priority"] = "low"
+        elif any(w in s for w in ["med", "normal", "mid"]):
+            args["priority"] = "medium"
+        elif any(w in s for w in ["high", "urgent", "critical"]):
+            args["priority"] = "high"
+    return args
 
 
 def _empty_metadata() -> dict:
@@ -405,6 +480,8 @@ class LLMOrchestrator:
                     return f"Sorry, tool {func_name} is incompatible with your request.", err_meta
 
             args = _coerce_args(func_name, call["function"]["arguments"])
+            # Normalise "no priority" → drop the key before validation
+            args = _normalize_no_priority(args)
 
             valid, error_msg = _validate_args(func_name, args)
             if not valid:
@@ -460,7 +537,7 @@ class LLMOrchestrator:
             if conn_result.freshness_status != "unknown":
                 latest_freshness_status = conn_result.freshness_status
             if conn_result.freshness_warning:
-                freshness_warnings.append(conn_result.freshness_warning)
+                freshness_warnings.append(str(conn_result.freshness_warning))
 
             optimized = apply_voice_limits(summarize_if_large(raw_data))
             ans = self._format_answer(optimized, func_name)
@@ -554,6 +631,8 @@ class LLMOrchestrator:
             if corr.get("rejection_reason"):
                 meta["correction_rejection_reason"] = corr["rejection_reason"]
             return meta
+
+        routing_latency_ms = 0  # always defined, even if exception fires before routing
 
         try:
             t_rout_start = time.perf_counter()
@@ -657,14 +736,37 @@ class LLMOrchestrator:
 
             # Authorized to execute tools
             t_tool_start = time.perf_counter()
-            response = self.client.chat(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": corrected_text},
-                ],
-                tools=TOOLS,
-            )
+            try:
+                response = self.client.chat(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": corrected_text},
+                    ],
+                    tools=TOOLS,
+                )
+            except Exception as llm_exc:
+                # The tool-calling LLM call failed (e.g. Ollama timeout).
+                # Return a clean, actionable message rather than a generic crash.
+                tool_latency_ms = int((time.perf_counter() - t_tool_start) * 1000)
+                metadata = _apply_corr_meta(_empty_metadata())
+                metadata.update(abs_meta)
+                metadata.update({
+                    "classified_intent": detected_intent.value,
+                    "correction_latency_ms": corr_latency_ms,
+                    "routing_latency_ms": routing_latency_ms,
+                    "tool_latency_ms": tool_latency_ms,
+                    "llm_error": str(llm_exc),
+                    "failure_type": "llm_tool_call_timeout",
+                })
+                return {
+                    "answer": (
+                        "The language model is taking too long to respond — "
+                        "Ollama may be busy or loading. Please try again in a moment."
+                    ),
+                    "metadata": metadata,
+                }
+
             message = response["message"]
             tool_calls = message.get("tool_calls")
 
@@ -707,7 +809,12 @@ class LLMOrchestrator:
             }
         except Exception as exc:
             metadata = _apply_corr_meta(_empty_metadata())
+            if 'abs_meta' in locals():
+                metadata.update(abs_meta)
+            if 'detected_intent' in locals() and detected_intent:
+                metadata["classified_intent"] = detected_intent.value
             metadata["llm_error"] = str(exc)
+            metadata["routing_latency_ms"] = routing_latency_ms
             metadata["failure_type"] = "orchestrator_exception"
             return {
                 "answer": "Sorry, I am currently unable to process your request with the language model.",

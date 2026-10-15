@@ -1,8 +1,0 @@
-{
-  "seed": 42,
-  "stt_model": "base",
-  "quick_mode": true,
-  "python_version": "3.11.3",
-  "git_commit": "13ae6fa_dirty",
-  "platform": "Windows-10-10.0.22631-SP0"
-}
